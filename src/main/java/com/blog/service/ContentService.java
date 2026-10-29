@@ -379,6 +379,14 @@ public class ContentService {
         return diaryMapper.selectList(new QueryWrapper<Diary>().orderByDesc("create_time").orderByDesc("id"));
     }
 
+    public List<Diary> recentDiaries(int limit) {
+        int size = limit < 1 ? 1 : Math.min(limit, 8);
+        return diaryMapper.selectList(new QueryWrapper<Diary>()
+                .orderByDesc("create_time")
+                .orderByDesc("id")
+                .last("limit " + size));
+    }
+
     public void saveDiary(Diary diary) {
         if (Texts.blank(diary.getTitle()) || Texts.blank(diary.getContent())) {
             throw new BizException("请填写日记标题和内容");

@@ -1,74 +1,157 @@
 <!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/front :: head('首页')}"></head>
-<body>
-<header th:replace="~{fragments/front :: nav('home')}"></header>
-<main class="sheet">
-    <header class="mast">
-        <p class="eyebrow" th:text="${site['site_subtitle'] ?: '只要朝着一个方向努力，一切都会变得得心应手'}">副标题</p>
-        <p class="mast-meta">
-            <span th:text="${articleCount + ' 篇文章'}">0 篇文章</span>
-            <span th:text="${visitCount + ' 次阅读'}">0 次阅读</span>
-            <span th:text="${messageCount + ' 条留言'}">0 条留言</span>
-        </p>
-    </header>
-
-    <div class="bulletin" th:each="notice : ${notices}">
-        <span>公告</span>
-        <strong th:text="${notice.title}">标题</strong>
-        <em th:text="${notice.content}">内容</em>
-    </div>
-
-    <div class="layout">
-        <div>
-            <a class="feature" th:each="a, iter : ${latest}" th:if="${iter.first}"
-               th:href="@{/article/{id}(id=${a.aid})}"
-               th:classappend="${!@fmt.logoOk(a.logo)} ? 'plain'">
-                <div>
-                    <p class="entry-kicker">
-                        <span>最新</span>
-                        <span th:text="${a.categoryName}">栏目</span>
-                        <span th:text="${a.createTime == null ? '' : (a.createTime.length() >= 10 ? #strings.substring(a.createTime,0,10) : a.createTime)}">日期</span>
-                    </p>
-                    <h2 th:text="${a.title}">标题</h2>
-                    <p class="dek" th:if="${a.digest != null and !#strings.isEmpty(a.digest)}"
-                       th:text="${#strings.abbreviate(a.digest, 180)}">摘要</p>
-                    <p class="go">阅读全文</p>
+<body class="page-home">
+<header th:replace="~{fragments/front :: navbar('home')}"></header>
+<main>
+    <div class="home">
+        <section class="hero-portal">
+            <div class="hero-copy">
+                <p class="hero-kicker">个人数字工作空间</p>
+                <h1 class="hero-title">让工作更智能，<br><span>让每一天更有序。</span></h1>
+                <p class="hero-lead">在这里，记录想法、整理知识、分享经验，<br>让日常的点滴慢慢形成自己的秩序。</p>
+                <div class="actions">
+                    <a class="btn" th:if="${loginUser != null and T(com.blog.service.UserService).isAdmin(loginUser)}" href="/admin">进入管理后台</a>
+                    <a class="btn" th:unless="${loginUser != null and T(com.blog.service.UserService).isAdmin(loginUser)}" href="/articles">浏览文章</a>
+                    <a class="btn ghost" href="/about">了解本站</a>
                 </div>
-                <img th:if="${@fmt.logoOk(a.logo)}" th:src="${a.logo}" alt="">
-            </a>
-            <p class="empty" th:if="${latest.isEmpty()}">还没有公开文章。</p>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+                <div class="art-stage">
+                    <span class="art-rule"></span>
+                    <span class="art-back"></span>
+                    <span class="art-front">
+                        <span class="art-label">手记</span>
+                        <span class="art-lines"><span></span><span></span><span></span></span>
+                        <span class="art-char">序</span>
+                        <span class="art-foot"><i class="art-clay"></i><i class="art-tick"></i></span>
+                    </span>
+                </div>
+            </div>
+        </section>
 
-            <div class="stream" th:if="${latest.size() > 1}">
-                <p class="rail-label">更早的文章</p>
-                <article class="entry" th:each="a, iter : ${latest}" th:unless="${iter.first}"
-                         th:classappend="${@fmt.logoOk(a.logo)} ? 'has-cover'">
-                    <div>
-                        <p class="entry-kicker">
-                            <span th:text="${a.categoryName}">栏目</span>
-                            <span th:text="${a.createTime == null ? '' : (a.createTime.length() >= 10 ? #strings.substring(a.createTime,0,10) : a.createTime)}">日期</span>
-                            <span th:if="${a.isHot == 1}">热门</span>
-                        </p>
-                        <h2><a th:href="@{/article/{id}(id=${a.aid})}" th:text="${a.title}">标题</a></h2>
-                        <p class="excerpt" th:if="${a.digest != null and !#strings.isEmpty(a.digest)}"
-                           th:text="${#strings.abbreviate(a.digest, 110)}">摘要</p>
-                    </div>
-                    <img th:if="${@fmt.logoOk(a.logo)}" th:src="${a.logo}" alt="">
-                </article>
-                <p class="more-line"><a href="/articles">全部文章</a></p>
+        <section id="features" class="feature-section" aria-label="核心功能">
+            <div class="feature-grid">
+                <a class="feat-card" href="/articles">
+                    <span class="feat-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"/>
+                            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 8H20"/>
+                        </svg>
+                    </span>
+                    <h2>知识与博客</h2>
+                    <p>记录经验，持续积累。</p>
+                    <span class="feat-go">阅读文章</span>
+                </a>
+                <a class="feat-card" href="/diaries">
+                    <span class="feat-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="5" width="16" height="15" rx="2"/>
+                            <path d="M8 3.5v3M16 3.5v3M4 10h16"/>
+                        </svg>
+                    </span>
+                    <h2>日记</h2>
+                    <p>回顾每天的进展。</p>
+                    <span class="feat-go">打开日记</span>
+                </a>
+                <a class="feat-card" href="/messages">
+                    <span class="feat-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 6.5h14a1 1 0 0 1 1 1V15a1 1 0 0 1-1 1H9l-4 3v-3H5a1 1 0 0 1-1-1V7.5a1 1 0 0 1 1-1z"/>
+                        </svg>
+                    </span>
+                    <h2>留言</h2>
+                    <p>把想法留在这里，方便交流。</p>
+                    <span class="feat-go">查看留言</span>
+                </a>
+                <a class="feat-card" th:if="${loginUser != null and T(com.blog.service.UserService).isAdmin(loginUser)}" href="/admin">
+                    <span class="feat-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.6"/>
+                            <rect x="13" y="3.5" width="7.5" height="4.5" rx="1.6"/>
+                            <rect x="13" y="10.5" width="7.5" height="10" rx="1.6"/>
+                            <rect x="3.5" y="13.5" width="7.5" height="7" rx="1.6"/>
+                        </svg>
+                    </span>
+                    <h2>业务工作台</h2>
+                    <p>集中管理日常事务。</p>
+                    <span class="feat-go">进入后台</span>
+                </a>
+                <a class="feat-card" th:unless="${loginUser != null and T(com.blog.service.UserService).isAdmin(loginUser)}" href="/links">
+                    <span class="feat-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10 13a4.5 4.5 0 0 0 6.4.2l1.2-1.2a4.5 4.5 0 0 0-6.4-6.4L10 7"/>
+                            <path d="M14 11a4.5 4.5 0 0 0-6.4-.2L6.4 12a4.5 4.5 0 0 0 6.4 6.4L14 17"/>
+                        </svg>
+                    </span>
+                    <h2>友情链接</h2>
+                    <p>看看彼此留下的站点。</p>
+                    <span class="feat-go">查看友链</span>
+                </a>
             </div>
-        </div>
-        <aside class="rail">
-            <h2>栏目</h2>
-            <a th:each="category : ${categories}" th:href="@{/articles(cid=${category.cid})}" th:title="${@fmt.blurb(category.cname)}">
-                <span th:text="${category.cname}">栏目</span>
-                <span th:text="${category.articleCount}">0</span>
-            </a>
-            <h2>热门</h2>
-            <div class="hot-list">
-                <a th:each="a : ${hot}" th:href="@{/article/{id}(id=${a.aid})}" th:text="${a.title}">标题</a>
+        </section>
+
+        <section class="recent" aria-labelledby="recent-title">
+            <div class="recent-head">
+                <h2 id="recent-title">最近更新</h2>
+                <a href="/articles">查看全部</a>
             </div>
-        </aside>
+            <div class="feed-error" th:if="${feedError}">
+                <p>最近更新暂时没有加载出来。</p>
+                <a href="/">重新加载</a>
+            </div>
+            <div class="recent-grid" th:unless="${feedError}">
+                <div class="recent-main">
+                    <p class="empty-block" th:if="${latest.isEmpty()}">还没有公开文章。</p>
+                    <a class="feed-item" th:each="a : ${latest}" th:href="@{/article/{id}(id=${a.aid})}">
+                        <img class="feed-cover" th:if="${@fmt.logoOk(a.logo)}" th:src="${a.logo}" alt="">
+                        <span class="feed-mark" th:unless="${@fmt.logoOk(a.logo)}" aria-hidden="true"
+                              th:text="${a.categoryName != null and !#strings.isEmpty(a.categoryName) ? #strings.substring(a.categoryName,0,1) : '文'}">文</span>
+                        <div class="feed-body">
+                            <h3 th:text="${a.title}">标题</h3>
+                            <p th:if="${a.digest != null and !#strings.isEmpty(a.digest)}" th:text="${#strings.abbreviate(a.digest, 96)}">摘要</p>
+                            <span class="feed-meta">
+                                <span class="feed-cat" th:if="${a.categoryName != null and !#strings.isEmpty(a.categoryName)}" th:text="${a.categoryName}">栏目</span>
+                                <time th:if="${a.createTime != null}" th:text="${a.createTime.length() >= 10 ? #strings.substring(a.createTime,0,10) : a.createTime}">日期</time>
+                            </span>
+                        </div>
+                    </a>
+                </div>
+                <aside class="side-col" aria-label="近期动态">
+                    <section class="side-group">
+                        <h3>公告</h3>
+                        <p class="quiet" th:if="${notices.isEmpty()}">暂无公告。</p>
+                        <article class="feed-item feed-static" th:each="notice : ${notices}">
+                            <span class="feed-mark" aria-hidden="true">告</span>
+                            <div class="feed-body">
+                                <h4 th:text="${notice.title}">标题</h4>
+                                <p th:if="${notice.content != null and !#strings.isEmpty(notice.content)}" th:text="${#strings.abbreviate(notice.content, 72)}">内容</p>
+                                <span class="feed-meta">
+                                    <span class="feed-pin" th:if="${notice.isTop == '1'}">置顶</span>
+                                    <time th:if="${notice.createTime != null}" th:text="${notice.createTime.length() >= 10 ? #strings.substring(notice.createTime,0,10) : notice.createTime}">日期</time>
+                                </span>
+                            </div>
+                        </article>
+                    </section>
+                    <section class="side-group">
+                        <h3>日记</h3>
+                        <p class="quiet" th:if="${diaries.isEmpty()}">还没有日记。</p>
+                        <a class="feed-item" th:each="item : ${diaries}" href="/diaries">
+                            <span class="feed-mark" aria-hidden="true">记</span>
+                            <div class="feed-body">
+                                <h4 th:text="${item.title}">标题</h4>
+                                <p th:if="${item.content != null and !#strings.isEmpty(item.content)}" th:text="${#strings.abbreviate(item.content, 72)}">内容</p>
+                                <span class="feed-meta">
+                                    <span th:if="${item.mood != null and !#strings.isEmpty(item.mood)}" th:text="${item.mood}">心情</span>
+                                    <time th:if="${item.createTime != null}" th:text="${item.createTime.length() >= 10 ? #strings.substring(item.createTime,0,10) : item.createTime}">日期</time>
+                                </span>
+                            </div>
+                        </a>
+                        <a class="side-more" href="/diaries">全部日记</a>
+                    </section>
+                </aside>
+            </div>
+        </section>
     </div>
 </main>
 <footer th:replace="~{fragments/front :: foot}"></footer>

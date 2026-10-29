@@ -3,40 +3,95 @@
 <head th:fragment="head(pageTitle)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${pageTitle + ' · ' + (site['site_name'] ?: '智能博客')}">智能博客</title>
-    <link rel="stylesheet" th:href="@{/css/site.css(v=15)}">
+    <title th:text="${pageTitle + ' · 智序'}">智序</title>
+    <link rel="stylesheet" th:href="@{/css/site.css(v=19)}">
 </head>
 <body>
-<header th:fragment="nav(active)" class="top">
+<header th:fragment="navbar(active)" class="top">
     <div class="wrap top-inner">
-        <a class="brand" href="/"><i></i><span th:text="${site['site_name'] ?: '智能博客'}">智能博客</span></a>
+        <a class="brand" href="/">
+            <span class="brand-mark" aria-hidden="true">序</span>
+            <span class="brand-copy">
+                <span class="brand-name">智序</span>
+                <span class="brand-en">SMART WORKSPACE</span>
+            </span>
+        </a>
         <input id="nav-toggle" class="nav-toggle" type="checkbox">
         <label class="nav-burger" for="nav-toggle"><span class="nav-burger-icon"></span><span class="sr">菜单</span></label>
-        <nav class="menu">
+        <nav class="menu" aria-label="主导航">
             <div class="menu-main">
-                <a href="/" th:classappend="${active == 'home'} ? 'on'">首页</a>
-                <a href="/articles" th:classappend="${active == 'articles'} ? 'on'">博客</a>
-                <a href="/messages" th:classappend="${active == 'messages'} ? 'on'">留言</a>
-                <a href="/diaries" th:classappend="${active == 'diaries'} ? 'on'">日记</a>
-                <a href="/links" th:classappend="${active == 'links'} ? 'on'">友链</a>
-                <a href="/about" th:classappend="${active == 'about'} ? 'on'">关于</a>
+                <a href="/" th:classappend="${active == 'home'} ? 'on'" th:attr="aria-current=${active == 'home'} ? 'page' : null">首页</a>
+                <a href="/articles" th:classappend="${active == 'articles'} ? 'on'" th:attr="aria-current=${active == 'articles'} ? 'page' : null">博客</a>
+                <a href="/messages" th:classappend="${active == 'messages'} ? 'on'" th:attr="aria-current=${active == 'messages'} ? 'page' : null">留言</a>
+                <a href="/diaries" th:classappend="${active == 'diaries'} ? 'on'" th:attr="aria-current=${active == 'diaries'} ? 'page' : null">日记</a>
+                <a href="/links" th:classappend="${active == 'links'} ? 'on'" th:attr="aria-current=${active == 'links'} ? 'page' : null">友链</a>
+                <a href="/about" th:classappend="${active == 'about'} ? 'on'" th:attr="aria-current=${active == 'about'} ? 'page' : null">关于</a>
             </div>
             <div class="menu-ops">
-                <a th:if="${loginUser != null and T(com.blog.service.UserService).isAdmin(loginUser)}" href="/admin">后台</a>
-                <a th:if="${loginUser == null}" href="/login">登录</a>
-                <span class="who" th:if="${loginUser != null}" th:text="${loginUser.nickname != null ? loginUser.nickname : loginUser.username}">用户</span>
-                <form th:if="${loginUser != null}" th:action="@{/logout}" method="post">
-                    <button class="out" type="submit">退出</button>
-                </form>
+                <a class="nav-admin" th:if="${loginUser != null and T(com.blog.service.UserService).isAdmin(loginUser)}" href="/admin">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.4"/>
+                        <rect x="13" y="3.5" width="7.5" height="4.5" rx="1.4"/>
+                        <rect x="13" y="10.5" width="7.5" height="10" rx="1.4"/>
+                        <rect x="3.5" y="13.5" width="7.5" height="7" rx="1.4"/>
+                    </svg>
+                    后台管理
+                </a>
+                <a class="nav-login" th:if="${loginUser == null}" href="/login">登录</a>
+                <details class="user-menu" th:if="${loginUser != null}">
+                    <summary class="user-trigger">
+                        <img class="user-avatar" th:if="${loginUser.img != null and @fmt.logoOk(loginUser.img)}" th:src="${loginUser.img}" alt="">
+                        <span class="user-fallback" th:unless="${loginUser.img != null and @fmt.logoOk(loginUser.img)}" aria-hidden="true"
+                              th:text="${#strings.substring((loginUser.nickname != null and !#strings.isEmpty(loginUser.nickname)) ? loginUser.nickname : loginUser.username, 0, 1)}">用</span>
+                        <span class="user-name" th:text="${(loginUser.nickname != null and !#strings.isEmpty(loginUser.nickname)) ? loginUser.nickname : loginUser.username}">用户</span>
+                        <svg class="chev" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                            <path d="M3 5.2 7 9l4-3.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </summary>
+                    <div class="user-drop">
+                        <p class="user-meta">
+                            <strong th:text="${(loginUser.nickname != null and !#strings.isEmpty(loginUser.nickname)) ? loginUser.nickname : loginUser.username}">用户</strong>
+                            <span th:text="${@fmt.roleName(loginUser.role, loginUser.username)}">角色</span>
+                        </p>
+                        <a href="/admin/profile">个人资料</a>
+                        <form th:action="@{/logout}" method="post">
+                            <button type="submit">退出登录</button>
+                        </form>
+                    </div>
+                </details>
             </div>
         </nav>
     </div>
     <div class="flash" th:if="${msg}" th:text="${msg}"></div>
+    <script>
+        (function () {
+            var menu = document.querySelector(".user-menu");
+            if (!menu) return;
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Escape") menu.removeAttribute("open");
+            });
+            document.addEventListener("click", function (event) {
+                if (!menu.contains(event.target)) menu.removeAttribute("open");
+            });
+        })();
+    </script>
 </header>
 <footer th:fragment="foot" class="foot">
     <div class="wrap foot-inner">
-        <span th:text="${site['footer'] ?: 'Spring Boot · 本地 MySQL'}">页脚</span>
-        <a href="/about">阅读说明</a>
+        <div class="foot-brand">
+            <strong>智序 · Smart ERP</strong>
+            <p>记录想法、整理知识、分享经验，让日常慢慢形成自己的秩序。</p>
+        </div>
+        <nav class="foot-links" aria-label="页脚">
+            <a href="/about">关于本站</a>
+            <a href="/links">友情链接</a>
+        </nav>
+        <div class="foot-meta">
+            <span th:text="'© ' + ${#dates.format(#dates.createNow(), 'yyyy')} + ' 智序'">© 2026 智序</span>
+            <span th:if="${site['footer'] != null and !#strings.isEmpty(site['footer'])}" th:text="${site['footer']}">页脚</span>
+            <span th:if="${site['beian'] != null and !#strings.isEmpty(site['beian'])}" th:text="${site['beian']}"></span>
+            <span th:if="${site['icp'] != null and !#strings.isEmpty(site['icp'])}" th:text="${site['icp']}"></span>
+        </div>
     </div>
 </footer>
 </body>

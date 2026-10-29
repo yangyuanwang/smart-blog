@@ -9,6 +9,9 @@ import com.blog.service.ContentService;
 import com.blog.service.SettingService;
 import com.blog.service.SmartService;
 import com.blog.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,13 +21,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 @Controller
 public class FrontController {
+
+    private static final Logger log = LoggerFactory.getLogger(FrontController.class);
 
     private final ArticleService articleService;
     private final ContentService contentService;
@@ -41,13 +46,17 @@ public class FrontController {
 
     @GetMapping("/")
     public String home(Model model) {
-        model.addAttribute("latest", articleService.latest(6));
-        model.addAttribute("hot", articleService.hot(5));
-        model.addAttribute("categories", contentService.categories());
-        model.addAttribute("notices", contentService.topNotices(3));
-        model.addAttribute("articleCount", articleService.publicCount());
-        model.addAttribute("visitCount", articleService.visits());
-        model.addAttribute("messageCount", contentService.messageCount());
+        try {
+            model.addAttribute("latest", articleService.latest(4));
+            model.addAttribute("diaries", contentService.recentDiaries(3));
+            model.addAttribute("notices", contentService.topNotices(3));
+        } catch (DataAccessException ex) {
+            log.warn("首页最近内容加载失败", ex);
+            model.addAttribute("latest", Collections.emptyList());
+            model.addAttribute("diaries", Collections.emptyList());
+            model.addAttribute("notices", Collections.emptyList());
+            model.addAttribute("feedError", Boolean.TRUE);
+        }
         return "front/index";
     }
 

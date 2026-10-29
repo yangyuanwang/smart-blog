@@ -4,66 +4,86 @@
 <body>
 <div class="shell">
     <aside th:replace="~{fragments/admin :: side('message')}"></aside>
-    <main class="main">
-        <div th:replace="~{fragments/admin :: top}"></div>
-        <h1>留言</h1>
-        <p class="flash" th:if="${msg}" th:text="${msg}"></p>
-        <div class="tools filters">
-            <a th:classappend="${status == null or status == ''} ? 'on'" href="/admin/messages">全部</a>
-            <a th:classappend="${status == '0'} ? 'on'" href="/admin/messages?status=0">待审核</a>
-            <a th:classappend="${status == '1'} ? 'on'" href="/admin/messages?status=1">已通过</a>
-            <a th:classappend="${status == '2'} ? 'on'" href="/admin/messages?status=2">已驳回</a>
-        </div>
-        <table>
-            <thead>
-            <tr><th>昵称</th><th>内容</th><th>IP</th><th>时间</th><th>状态</th><th></th></tr>
-            </thead>
-            <tbody>
-            <tr th:each="item : ${pager.records}">
-                <td>
-                    <b th:text="${item.nickname}">昵称</b>
-                    <div class="muted" th:if="${item.parentId != null}">回复</div>
-                </td>
-                <td class="msg-body" th:text="${item.content}">内容</td>
-                <td th:text="${item.ip != null ? item.ip : '-'}">ip</td>
-                <td class="muted" th:text="${item.createTime}">时间</td>
-                <td>
-                    <span class="tag wait" th:if="${item.status == '0'}">待审核</span>
-                    <span class="tag ok" th:if="${item.status == '1'}">已通过</span>
-                    <span class="tag no" th:if="${item.status == '2'}">已驳回</span>
-                </td>
-                <td class="tools">
-                    <form th:if="${item.status != '1'}" th:action="@{/admin/messages/status}" method="post">
-                        <input type="hidden" name="id" th:value="${item.id}">
-                        <input type="hidden" name="status" value="1">
-                        <input type="hidden" name="page" th:value="${pager.current}">
-                        <input type="hidden" name="filter" th:value="${status}">
-                        <button type="submit">通过审核</button>
-                    </form>
-                    <form th:if="${item.status != '2'}" th:action="@{/admin/messages/status}" method="post">
-                        <input type="hidden" name="id" th:value="${item.id}">
-                        <input type="hidden" name="status" value="2">
-                        <input type="hidden" name="page" th:value="${pager.current}">
-                        <input type="hidden" name="filter" th:value="${status}">
-                        <button class="line" type="submit">驳回</button>
-                    </form>
-                    <form th:action="@{/admin/messages/delete}" method="post" onsubmit="return confirm('确定删除这条留言？')">
-                        <input type="hidden" name="id" th:value="${item.id}">
-                        <input type="hidden" name="page" th:value="${pager.current}">
-                        <input type="hidden" name="filter" th:value="${status}">
-                        <button class="danger" type="submit">删除</button>
-                    </form>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-        <p class="muted" th:if="${pager.records.isEmpty()}">没有留言。</p>
-        <nav class="pager" th:if="${pager.pages > 1}">
-            <a th:if="${pager.current > 1}" th:href="@{/admin/messages(page=${pager.current - 1}, status=${status})}">上一页</a>
-            <span th:text="${pager.current + ' / ' + pager.pages}"></span>
-            <a th:if="${pager.current < pager.pages}" th:href="@{/admin/messages(page=${pager.current + 1}, status=${status})}">下一页</a>
-        </nav>
-    </main>
+    <div class="workspace">
+        <header th:replace="~{fragments/admin :: top('留言')}"></header>
+        <main class="main">
+            <div class="page-head">
+                <div>
+                    <h1>留言</h1>
+                    <p class="page-desc">审核、回复和删除访客留言。驳回后的留言不会出现在前台。</p>
+                </div>
+            </div>
+            <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+            <div class="filters">
+                <a th:classappend="${status == null or status == ''} ? 'on'" href="/admin/messages">全部</a>
+                <a th:classappend="${status == '0'} ? 'on'" href="/admin/messages?status=0">待审核</a>
+                <a th:classappend="${status == '1'} ? 'on'" href="/admin/messages?status=1">已通过</a>
+                <a th:classappend="${status == '2'} ? 'on'" href="/admin/messages?status=2">已驳回</a>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr><th>留言</th><th>IP</th><th>时间</th><th>状态</th><th>操作</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${pager.records.isEmpty()}">
+                        <td class="empty" colspan="5">没有留言。</td>
+                    </tr>
+                    <tr th:each="item : ${pager.records}">
+                        <td>
+                            <b th:text="${item.nickname != null and item.nickname != 'null' ? item.nickname : '访客'}">昵称</b>
+                            <span class="muted" th:if="${item.parentId != null}"> · 回复</span>
+                            <div class="msg-body" th:text="${item.content}">内容</div>
+                            <p class="reply-line" th:if="${item.reply != null and !#strings.isEmpty(item.reply) and item.reply != 'null'}" th:text="${item.reply}">回复</p>
+                        </td>
+                        <td th:text="${item.ip != null and item.ip != 'null' and !#strings.isEmpty(item.ip) ? item.ip : '—'}">ip</td>
+                        <td class="muted" th:text="${item.createTime != null and item.createTime != 'null' ? (item.createTime.length() >= 16 ? #strings.substring(item.createTime,0,16) : item.createTime) : '—'}">时间</td>
+                        <td>
+                            <span class="badge wait" th:if="${item.status == '0'}">待审核</span>
+                            <span class="badge ok" th:if="${item.status == '1'}">已通过</span>
+                            <span class="badge no" th:if="${item.status == '2'}">已驳回</span>
+                        </td>
+                        <td class="tools">
+                            <form th:if="${item.status != '1'}" th:action="@{/admin/messages/status}" method="post">
+                                <input type="hidden" name="id" th:value="${item.id}">
+                                <input type="hidden" name="status" value="1">
+                                <input type="hidden" name="page" th:value="${pager.current}">
+                                <input type="hidden" name="filter" th:value="${status}">
+                                <button class="line" type="submit">通过</button>
+                            </form>
+                            <form th:if="${item.status != '2'}" th:action="@{/admin/messages/status}" method="post">
+                                <input type="hidden" name="id" th:value="${item.id}">
+                                <input type="hidden" name="status" value="2">
+                                <input type="hidden" name="page" th:value="${pager.current}">
+                                <input type="hidden" name="filter" th:value="${status}">
+                                <button class="line" type="submit">驳回</button>
+                            </form>
+                            <details class="more">
+                                <summary>回复</summary>
+                                <form class="more-menu reply-pop" th:action="@{/admin/messages/reply}" method="post">
+                                    <input type="hidden" name="id" th:value="${item.id}">
+                                    <textarea name="reply" rows="3" th:text="${item.reply}">回复</textarea>
+                                    <button type="submit">保存回复</button>
+                                </form>
+                            </details>
+                            <form th:action="@{/admin/messages/delete}" method="post" onsubmit="return confirm('确定删除这条留言？')">
+                                <input type="hidden" name="id" th:value="${item.id}">
+                                <input type="hidden" name="page" th:value="${pager.current}">
+                                <input type="hidden" name="filter" th:value="${status}">
+                                <button class="danger" type="submit">删除</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <nav class="pager" th:if="${pager.pages > 1}">
+                <a th:if="${pager.current > 1}" th:href="@{/admin/messages(page=${pager.current - 1}, status=${status})}">上一页</a>
+                <span th:text="${pager.current + ' / ' + pager.pages}"></span>
+                <a th:if="${pager.current < pager.pages}" th:href="@{/admin/messages(page=${pager.current + 1}, status=${status})}">下一页</a>
+            </nav>
+        </main>
+    </div>
 </div>
 </body>
 </html>

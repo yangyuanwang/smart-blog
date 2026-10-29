@@ -4,45 +4,68 @@
 <body>
 <div class="shell">
     <aside th:replace="~{fragments/admin :: side('user')}"></aside>
-    <main class="main">
-        <div th:replace="~{fragments/admin :: top}"></div>
-        <h1>用户</h1>
-        <p class="flash" th:if="${msg}" th:text="${msg}"></p>
-        <form class="inline" action="/admin/users" method="get" style="margin-bottom:12px">
-            <input type="text" name="keyword" placeholder="用户名或昵称" th:value="${keyword}">
-            <button type="submit">搜索</button>
-        </form>
-        <table>
-            <thead><tr><th>用户</th><th>角色</th><th>状态</th><th>手机</th><th>登录</th><th></th></tr></thead>
-            <tbody>
-            <tr th:each="item : ${pager.records}">
-                <td>
-                    <b th:text="${item.username}">用户名</b>
-                    <div class="muted" th:text="${item.nickname}">昵称</div>
-                </td>
-                <td th:text="${@fmt.roleName(item.role, item.username)}">角色</td>
-                <td th:text="${@fmt.stateName(item.state)}">状态</td>
-                <td th:text="${item.phone}">手机</td>
-                <td th:text="${(item.loginCount ?: 0) + ' 次'}">次数</td>
-                <td class="tools">
-                    <form th:action="@{/admin/users/state}" method="post">
-                        <input type="hidden" name="uid" th:value="${item.uid}">
-                        <input type="hidden" name="state" th:value="${item.state == '0' ? '1' : '0'}">
-                        <button class="line" type="submit" th:text="${item.state == '0' ? '解锁' : '锁定'}">锁定</button>
-                    </form>
-                    <form th:action="@{/admin/users/role}" method="post" class="inline">
-                        <input type="hidden" name="uid" th:value="${item.uid}">
-                        <select name="role">
-                            <option value="0" th:selected="${item.role == '0'}">管理员</option>
-                            <option value="1" th:selected="${item.role != '0'}">普通用户</option>
-                        </select>
-                        <button class="line" type="submit">改角色</button>
-                    </form>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </main>
+    <div class="workspace">
+        <header th:replace="~{fragments/admin :: top('用户')}"></header>
+        <main class="main">
+            <div class="page-head">
+                <div>
+                    <h1>用户</h1>
+                    <p class="page-desc">查看账号、角色和锁定状态。不能锁定自己，也不能修改自己或 admin 的角色。</p>
+                </div>
+            </div>
+            <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+            <form class="search" action="/admin/users" method="get">
+                <input type="text" name="keyword" placeholder="用户名或昵称" th:value="${keyword}">
+                <button type="submit">搜索</button>
+            </form>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>用户</th><th>角色</th><th>状态</th><th>手机</th><th class="num">登录次数</th><th>操作</th></tr></thead>
+                    <tbody>
+                    <tr th:if="${pager.records.isEmpty()}">
+                        <td class="empty" colspan="6">没有匹配的用户。</td>
+                    </tr>
+                    <tr th:each="item : ${pager.records}">
+                        <td>
+                            <b th:text="${item.username}">用户名</b>
+                            <div class="muted" th:if="${item.nickname != null and !#strings.isEmpty(item.nickname) and item.nickname != 'null'}" th:text="${item.nickname}">昵称</div>
+                        </td>
+                        <td>
+                            <span class="badge role" th:if="${item.role == '0' or #strings.equalsIgnoreCase(item.username, 'admin')}" th:text="${@fmt.roleName(item.role, item.username)}">管理员</span>
+                            <span class="badge" th:unless="${item.role == '0' or #strings.equalsIgnoreCase(item.username, 'admin')}" th:text="${@fmt.roleName(item.role, item.username)}">普通用户</span>
+                        </td>
+                        <td>
+                            <span class="badge no" th:if="${item.state == '0'}">已锁定</span>
+                            <span class="badge ok" th:unless="${item.state == '0'}">正常</span>
+                        </td>
+                        <td th:text="${item.phone != null and !#strings.isEmpty(item.phone) and item.phone != 'null' ? item.phone : '—'}">手机</td>
+                        <td class="num" th:text="${item.loginCount != null ? item.loginCount : 0}">0</td>
+                        <td class="tools">
+                            <form th:action="@{/admin/users/state}" method="post" th:attr="onsubmit=${item.state == '0'} ? null : 'return confirm(\'确定锁定这个账号？\')'">
+                                <input type="hidden" name="uid" th:value="${item.uid}">
+                                <input type="hidden" name="state" th:value="${item.state == '0' ? '1' : '0'}">
+                                <button class="line" type="submit" th:text="${item.state == '0' ? '解锁' : '锁定'}">锁定</button>
+                            </form>
+                            <form th:action="@{/admin/users/role}" method="post" class="inline">
+                                <input type="hidden" name="uid" th:value="${item.uid}">
+                                <select name="role">
+                                    <option value="0" th:selected="${item.role == '0'}">管理员</option>
+                                    <option value="1" th:selected="${item.role != '0'}">普通用户</option>
+                                </select>
+                                <button class="line" type="submit">改角色</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <nav class="pager" th:if="${pager.pages > 1}">
+                <a th:if="${pager.current > 1}" th:href="@{/admin/users(page=${pager.current - 1}, keyword=${keyword})}">上一页</a>
+                <span th:text="${pager.current + ' / ' + pager.pages}"></span>
+                <a th:if="${pager.current < pager.pages}" th:href="@{/admin/users(page=${pager.current + 1}, keyword=${keyword})}">下一页</a>
+            </nav>
+        </main>
+    </div>
 </div>
 </body>
 </html>

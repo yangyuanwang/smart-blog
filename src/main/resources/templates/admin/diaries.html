@@ -4,34 +4,57 @@
 <body>
 <div class="shell">
     <aside th:replace="~{fragments/admin :: side('diary')}"></aside>
-    <main class="main">
-        <div th:replace="~{fragments/admin :: top}"></div>
-        <h1>日记</h1>
-        <p class="flash" th:if="${msg}" th:text="${msg}"></p>
-        <form class="panel" action="/admin/diaries" method="post" style="display:grid;gap:8px;margin-bottom:16px">
-            <input th:if="${diary != null and diary.id != null}" type="hidden" name="id" th:value="${diary.id}">
-            <input type="text" name="title" placeholder="标题" th:value="${diary != null ? diary.title : ''}" required>
-            <input type="text" name="mood" placeholder="心情，例如 随记" th:value="${diary != null ? diary.mood : ''}">
-            <textarea name="content" required th:text="${diary != null ? diary.content : ''}"></textarea>
-            <button type="submit">保存</button>
-        </form>
-        <table>
-            <thead><tr><th>时间</th><th>日记</th><th></th></tr></thead>
-            <tbody>
-            <tr th:each="item : ${diaries}">
-                <td th:text="${item.createTime}">时间</td>
-                <td><b th:text="${item.title}">标题</b><div th:text="${item.content}">内容</div></td>
-                <td class="tools">
-                    <a class="btn line" th:href="@{/admin/diaries(id=${item.id})}">编辑</a>
-                    <form th:action="@{/admin/diaries/delete}" method="post">
-                        <input type="hidden" name="id" th:value="${item.id}">
-                        <button class="danger" type="submit">删除</button>
-                    </form>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </main>
+    <div class="workspace">
+        <header th:replace="~{fragments/admin :: top('日记')}"></header>
+        <main class="main">
+            <div class="page-head">
+                <div>
+                    <h1>日记</h1>
+                    <p class="page-desc">记录标题、心情和正文。前台日记列表会展示这些内容。</p>
+                </div>
+            </div>
+            <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+            <form class="panel form-narrow" action="/admin/diaries" method="post">
+                <h2 th:text="${diary != null and diary.id != null ? '编辑日记' : '新日记'}">新日记</h2>
+                <input th:if="${diary != null and diary.id != null}" type="hidden" name="id" th:value="${diary.id}">
+                <label>标题<input type="text" name="title" placeholder="标题" th:value="${diary != null ? diary.title : ''}" required></label>
+                <label>心情<input type="text" name="mood" placeholder="例如 随记" th:value="${diary != null ? diary.mood : ''}"></label>
+                <label>内容<textarea name="content" required th:text="${diary != null ? diary.content : ''}"></textarea></label>
+                <div class="tools">
+                    <button type="submit">保存</button>
+                    <a class="btn line" th:if="${diary != null and diary.id != null}" href="/admin/diaries">取消编辑</a>
+                </div>
+            </form>
+            <section class="section">
+                <h2>已有日记</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>日记</th><th>时间</th><th>操作</th></tr></thead>
+                        <tbody>
+                        <tr th:if="${diaries.isEmpty()}">
+                            <td class="empty" colspan="3">还没有日记。</td>
+                        </tr>
+                        <tr th:each="item : ${diaries}">
+                            <td>
+                                <b th:text="${item.title}">标题</b>
+                                <span class="badge" th:if="${item.mood != null and !#strings.isEmpty(item.mood) and item.mood != 'null'}" th:text="${item.mood}">心情</span>
+                                <div class="cell-sub" th:text="${item.content}">内容</div>
+                            </td>
+                            <td th:text="${item.createTime != null and item.createTime != 'null' ? (item.createTime.length() >= 16 ? #strings.substring(item.createTime,0,16) : item.createTime) : '—'}">时间</td>
+                            <td class="tools">
+                                <a class="btn line" th:href="@{/admin/diaries(id=${item.id})}">编辑</a>
+                                <form th:action="@{/admin/diaries/delete}" method="post" onsubmit="return confirm('确定删除这篇日记？')">
+                                    <input type="hidden" name="id" th:value="${item.id}">
+                                    <button class="danger" type="submit">删除</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
 </div>
 </body>
 </html>

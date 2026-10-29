@@ -4,42 +4,61 @@
 <body>
 <div class="shell">
     <aside th:replace="~{fragments/admin :: side('comment')}"></aside>
-    <main class="main">
-        <div th:replace="~{fragments/admin :: top}"></div>
-        <h1>评论</h1>
-        <p class="flash" th:if="${msg}" th:text="${msg}"></p>
-        <div class="tools" style="margin-bottom:12px">
-            <a href="/admin/comments">全部</a>
-            <a href="/admin/comments?status=1">已通过</a>
-            <a href="/admin/comments?status=0">待审核</a>
-        </div>
-        <table>
-            <thead><tr><th>文章</th><th>评论</th><th>状态</th><th></th></tr></thead>
-            <tbody>
-            <tr th:each="item : ${pager.records}">
-                <td th:text="${item.articleTitle}">文章</td>
-                <td>
-                    <b th:text="${item.nickname}">昵称</b>
-                    <div th:text="${item.content}">内容</div>
-                    <div class="muted" th:text="${item.createTime}">时间</div>
-                </td>
-                <td th:text="${item.status == '1' ? '通过' : '待审'}">状态</td>
-                <td class="tools">
-                    <form th:action="@{/admin/comments/status}" method="post">
-                        <input type="hidden" name="id" th:value="${item.id}">
-                        <input type="hidden" name="status" th:value="${item.status == '1' ? '0' : '1'}">
-                        <button class="line" type="submit" th:text="${item.status == '1' ? '隐藏' : '通过'}">通过</button>
-                    </form>
-                    <form th:action="@{/admin/comments/delete}" method="post">
-                        <input type="hidden" name="id" th:value="${item.id}">
-                        <button class="danger" type="submit">删除</button>
-                    </form>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-        <p class="muted" th:if="${pager.records.isEmpty()}">没有评论。</p>
-    </main>
+    <div class="workspace">
+        <header th:replace="~{fragments/admin :: top('评论')}"></header>
+        <main class="main">
+            <div class="page-head">
+                <div>
+                    <h1>评论</h1>
+                    <p class="page-desc">审核文章下的读者评论。只有已通过的评论会出现在前台。</p>
+                </div>
+            </div>
+            <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+            <div class="filters">
+                <a th:classappend="${status == null or status == ''} ? 'on'" href="/admin/comments">全部</a>
+                <a th:classappend="${status == '1'} ? 'on'" href="/admin/comments?status=1">已通过</a>
+                <a th:classappend="${status == '0'} ? 'on'" href="/admin/comments?status=0">待审核</a>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>评论</th><th>文章</th><th>状态</th><th>操作</th></tr></thead>
+                    <tbody>
+                    <tr th:if="${pager.records.isEmpty()}">
+                        <td class="empty" colspan="4">没有评论。</td>
+                    </tr>
+                    <tr th:each="item : ${pager.records}">
+                        <td>
+                            <b th:text="${item.nickname != null and item.nickname != 'null' ? item.nickname : '访客'}">昵称</b>
+                            <div class="msg-body" th:text="${item.content}">内容</div>
+                            <div class="muted" th:text="${item.createTime != null and item.createTime != 'null' ? item.createTime : '—'}">时间</div>
+                        </td>
+                        <td th:text="${item.articleTitle != null and item.articleTitle != 'null' ? item.articleTitle : '文章已删除'}">文章</td>
+                        <td>
+                            <span class="badge ok" th:if="${item.status == '1'}">已通过</span>
+                            <span class="badge wait" th:unless="${item.status == '1'}">待审核</span>
+                        </td>
+                        <td class="tools">
+                            <form th:action="@{/admin/comments/status}" method="post">
+                                <input type="hidden" name="id" th:value="${item.id}">
+                                <input type="hidden" name="status" th:value="${item.status == '1' ? '0' : '1'}">
+                                <button class="line" type="submit" th:text="${item.status == '1' ? '隐藏' : '通过'}">通过</button>
+                            </form>
+                            <form th:action="@{/admin/comments/delete}" method="post" onsubmit="return confirm('确定删除这条评论？')">
+                                <input type="hidden" name="id" th:value="${item.id}">
+                                <button class="danger" type="submit">删除</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <nav class="pager" th:if="${pager.pages > 1}">
+                <a th:if="${pager.current > 1}" th:href="@{/admin/comments(page=${pager.current - 1}, status=${status})}">上一页</a>
+                <span th:text="${pager.current + ' / ' + pager.pages}"></span>
+                <a th:if="${pager.current < pager.pages}" th:href="@{/admin/comments(page=${pager.current + 1}, status=${status})}">下一页</a>
+            </nav>
+        </main>
+    </div>
 </div>
 </body>
 </html>

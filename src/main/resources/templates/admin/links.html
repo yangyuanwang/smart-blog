@@ -4,37 +4,56 @@
 <body>
 <div class="shell">
     <aside th:replace="~{fragments/admin :: side('link')}"></aside>
-    <main class="main">
-        <div th:replace="~{fragments/admin :: top}"></div>
-        <h1>友链</h1>
-        <p class="flash" th:if="${msg}" th:text="${msg}"></p>
-        <p class="muted">站点名不超过 15 字，地址和描述不超过 45 字，这是原表的字段长度。</p>
-        <form class="panel" action="/admin/links" method="post" style="display:grid;gap:8px;margin-bottom:16px">
-            <input th:if="${link.id != null}" type="hidden" name="id" th:value="${link.id}">
-            <input type="text" name="siteName" placeholder="站点名" maxlength="15" th:value="${link.siteName}" required>
-            <input type="url" name="siteUrl" placeholder="https://" maxlength="45" th:value="${link.siteUrl}" required>
-            <input type="text" name="siteDesc" placeholder="描述" maxlength="45" th:value="${link.siteDesc}" required>
-            <input type="number" name="sort" placeholder="排序，小的靠前" th:value="${link.sort}">
-            <button type="submit">保存</button>
-        </form>
-        <table>
-            <thead><tr><th>名称</th><th>地址</th><th>描述</th><th></th></tr></thead>
-            <tbody>
-            <tr th:each="item : ${links}">
-                <td th:text="${item.siteName}">名称</td>
-                <td th:text="${item.siteUrl}">地址</td>
-                <td th:text="${item.siteDesc}">描述</td>
-                <td class="tools">
-                    <a class="btn line" th:href="@{/admin/links(id=${item.id})}">编辑</a>
-                    <form th:action="@{/admin/links/delete}" method="post">
-                        <input type="hidden" name="id" th:value="${item.id}">
-                        <button class="danger" type="submit">删除</button>
-                    </form>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </main>
+    <div class="workspace">
+        <header th:replace="~{fragments/admin :: top('友链')}"></header>
+        <main class="main">
+            <div class="page-head">
+                <div>
+                    <h1>友链</h1>
+                    <p class="page-desc">管理前台友情链接。站点名不超过 15 字，地址和描述不超过 45 字。</p>
+                </div>
+            </div>
+            <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+            <form class="panel form-narrow" action="/admin/links" method="post">
+                <h2 th:text="${link.id != null ? '编辑友链' : '新友链'}">新友链</h2>
+                <input th:if="${link.id != null}" type="hidden" name="id" th:value="${link.id}">
+                <label>名称<input type="text" name="siteName" placeholder="站点名" maxlength="15" th:value="${link.siteName}" required></label>
+                <label>地址<input type="url" name="siteUrl" placeholder="https://" maxlength="45" th:value="${link.siteUrl}" required></label>
+                <label>描述<input type="text" name="siteDesc" placeholder="描述" maxlength="45" th:value="${link.siteDesc}" required></label>
+                <label>排序<input type="number" name="sort" placeholder="小的靠前" th:value="${link.sort}"></label>
+                <div class="tools">
+                    <button type="submit">保存</button>
+                    <a class="btn line" th:if="${link.id != null}" href="/admin/links">取消编辑</a>
+                </div>
+            </form>
+            <section class="section">
+                <h2>已有友链</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>名称</th><th>地址</th><th>描述</th><th class="num">排序</th><th>操作</th></tr></thead>
+                        <tbody>
+                        <tr th:if="${links.isEmpty()}">
+                            <td class="empty" colspan="5">还没有友链。</td>
+                        </tr>
+                        <tr th:each="item : ${links}">
+                            <td th:text="${item.siteName}">名称</td>
+                            <td class="url-cell" th:title="${item.siteUrl}" th:text="${item.siteUrl}">地址</td>
+                            <td th:text="${item.siteDesc}">描述</td>
+                            <td class="num" th:text="${item.sort != null ? item.sort : 0}">0</td>
+                            <td class="tools">
+                                <a class="btn line" th:href="@{/admin/links(id=${item.id})}">编辑</a>
+                                <form th:action="@{/admin/links/delete}" method="post" onsubmit="return confirm('确定删除这条友链？')">
+                                    <input type="hidden" name="id" th:value="${item.id}">
+                                    <button class="danger" type="submit">删除</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
 </div>
 </body>
 </html>

@@ -4,37 +4,56 @@
 <body>
 <div class="shell">
     <aside th:replace="~{fragments/admin :: side('notice')}"></aside>
-    <main class="main">
-        <div th:replace="~{fragments/admin :: top}"></div>
-        <h1>公告</h1>
-        <p class="flash" th:if="${msg}" th:text="${msg}"></p>
-        <form class="panel" action="/admin/notices" method="post" style="display:grid;gap:8px;margin-bottom:16px">
-            <input th:if="${notice.id != null}" type="hidden" name="id" th:value="${notice.id}">
-            <input type="text" name="title" placeholder="标题" th:value="${notice.title}" required>
-            <textarea name="content" required th:text="${notice.content}"></textarea>
-            <label class="check"><input type="checkbox" name="isTop" value="1" th:checked="${notice.isTop == '1'}"> 置顶</label>
-            <button type="submit">保存</button>
-        </form>
-        <table>
-            <thead><tr><th>公告</th><th></th></tr></thead>
-            <tbody>
-            <tr th:each="item : ${notices}">
-                <td>
-                    <b th:text="${item.title}">标题</b>
-                    <span class="muted" th:if="${item.isTop == '1'}">置顶</span>
-                    <div th:text="${item.content}">内容</div>
-                </td>
-                <td class="tools">
-                    <a class="btn line" th:href="@{/admin/notices(id=${item.id})}">编辑</a>
-                    <form th:action="@{/admin/notices/delete}" method="post">
-                        <input type="hidden" name="id" th:value="${item.id}">
-                        <button class="danger" type="submit">删除</button>
-                    </form>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </main>
+    <div class="workspace">
+        <header th:replace="~{fragments/admin :: top('公告')}"></header>
+        <main class="main">
+            <div class="page-head">
+                <div>
+                    <h1>公告</h1>
+                    <p class="page-desc">编写首页展示的公告。公告没有独立详情页。</p>
+                </div>
+            </div>
+            <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+            <form class="panel form-narrow" action="/admin/notices" method="post">
+                <h2 th:text="${notice.id != null ? '编辑公告' : '新公告'}">新公告</h2>
+                <input th:if="${notice.id != null}" type="hidden" name="id" th:value="${notice.id}">
+                <label>标题<input type="text" name="title" placeholder="标题" th:value="${notice.title}" required></label>
+                <label>内容<textarea name="content" required th:text="${notice.content}"></textarea></label>
+                <label class="check"><input type="checkbox" name="isTop" value="1" th:checked="${notice.isTop == '1'}"> 置顶</label>
+                <div class="tools">
+                    <button type="submit">保存</button>
+                    <a class="btn line" th:if="${notice.id != null}" href="/admin/notices">取消编辑</a>
+                </div>
+            </form>
+            <section class="section">
+                <h2>已有公告</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>公告</th><th>操作</th></tr></thead>
+                        <tbody>
+                        <tr th:if="${notices.isEmpty()}">
+                            <td class="empty" colspan="2">还没有公告。</td>
+                        </tr>
+                        <tr th:each="item : ${notices}">
+                            <td>
+                                <b th:text="${item.title}">标题</b>
+                                <span class="badge hot" th:if="${item.isTop == '1'}">置顶</span>
+                                <div class="cell-sub" th:text="${item.content}">内容</div>
+                            </td>
+                            <td class="tools">
+                                <a class="btn line" th:href="@{/admin/notices(id=${item.id})}">编辑</a>
+                                <form th:action="@{/admin/notices/delete}" method="post" onsubmit="return confirm('确定删除这条公告？')">
+                                    <input type="hidden" name="id" th:value="${item.id}">
+                                    <button class="danger" type="submit">删除</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
 </div>
 </body>
 </html>

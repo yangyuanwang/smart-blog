@@ -4,26 +4,33 @@
 <body>
 <div class="shell">
     <aside th:replace="~{fragments/admin :: side('setting')}"></aside>
-    <main class="main">
-        <div th:replace="~{fragments/admin :: top}"></div>
-        <h1>站点设置</h1>
-        <p class="flash" th:if="${msg}" th:text="${msg}"></p>
-        <form class="panel" action="/admin/settings" method="post" style="display:grid;gap:12px;max-width:720px">
-            <h2 id="basic">基本设置</h2>
-            <label>站点名<input type="text" name="site_name" th:value="${site['site_name']}"></label>
-            <label>副标题<input type="text" name="site_subtitle" th:value="${site['site_subtitle']}"></label>
-            <label>页脚<input type="text" name="footer" th:value="${site['footer']}"></label>
-            <h2 id="read">阅读设置</h2>
-            <label>关于 / 阅读说明<textarea name="about" th:text="${site['about']}"></textarea></label>
-            <label>前台每页文章数<input type="number" name="page_size" min="1" max="50" th:value="${site['page_size']}"></label>
-            <label class="check"><input type="checkbox" name="show_visit" value="1" th:checked="${site['show_visit'] != '0'}"> 显示阅读量</label>
-            <label class="check"><input type="checkbox" name="allow_comment" value="1" th:checked="${site['allow_comment'] != '0'}"> 允许评论和留言</label>
-            <label class="check"><input type="checkbox" name="comment_audit" value="1" th:checked="${site['comment_audit'] == '1'}"> 评论先审后发</label>
-            <label class="check"><input type="checkbox" name="admin_message_pass" value="1" th:checked="${site['admin_message_pass'] != '0'}"> 管理员留言免审核</label>
-            <label class="check"><input type="checkbox" name="allow_register" value="1" th:checked="${site['allow_register'] != '0'}"> 开放注册</label>
-            <button type="submit">保存设置</button>
-        </form>
-    </main>
+    <div class="workspace">
+        <header th:replace="~{fragments/admin :: top('设置')}"></header>
+        <main class="main">
+            <div class="page-head">
+                <div>
+                    <h1>站点设置</h1>
+                    <p class="page-desc">调整站点名称、阅读分页，以及评论、留言和注册开关。</p>
+                </div>
+            </div>
+            <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+            <form class="panel form-narrow" action="/admin/settings" method="post">
+                <h2 id="basic">基本设置</h2>
+                <label>站点名<input type="text" name="site_name" th:value="${site['site_name']}"></label>
+                <label>副标题<input type="text" name="site_subtitle" th:value="${site['site_subtitle']}"></label>
+                <label>页脚<input type="text" name="footer" th:value="${site['footer']}"></label>
+                <h2 id="read">阅读与互动</h2>
+                <label>关于 / 阅读说明<textarea name="about" th:text="${site['about']}"></textarea></label>
+                <label>前台每页文章数<input type="number" name="page_size" min="1" max="50" th:value="${site['page_size']}"></label>
+                <label class="check"><input type="checkbox" name="show_visit" value="1" th:checked="${site['show_visit'] != '0'}"> 显示阅读量</label>
+                <label class="check"><input type="checkbox" name="allow_comment" value="1" th:checked="${site['allow_comment'] != '0'}"> 允许评论和留言</label>
+                <label class="check"><input type="checkbox" name="comment_audit" value="1" th:checked="${site['comment_audit'] == '1'}"> 评论先审后发</label>
+                <label class="check"><input type="checkbox" name="admin_message_pass" value="1" th:checked="${site['admin_message_pass'] != '0'}"> 管理员留言免审核</label>
+                <label class="check"><input type="checkbox" name="allow_register" value="1" th:checked="${site['allow_register'] != '0'}"> 开放注册</label>
+                <button type="submit">保存设置</button>
+            </form>
+        </main>
+    </div>
 </div>
 </body>
 </html>

@@ -4,27 +4,42 @@
 <body>
 <div class="shell">
     <aside th:replace="~{fragments/admin :: side('log')}"></aside>
-    <main class="main">
-        <div th:replace="~{fragments/admin :: top}"></div>
-        <h1>登录日志</h1>
-        <table>
-            <thead><tr><th>时间</th><th>用户</th><th>IP</th><th>结果</th><th>说明</th></tr></thead>
-            <tbody>
-            <tr th:each="item : ${pager.records}">
-                <td th:text="${item.loginTime}">时间</td>
-                <td th:text="${item.username}">用户</td>
-                <td th:text="${item.ip}">ip</td>
-                <td th:text="${item.success == '1' ? '成功' : '失败'}">结果</td>
-                <td th:text="${item.message}">说明</td>
-            </tr>
-            </tbody>
-        </table>
-        <nav class="pager" th:if="${pager.pages > 1}">
-            <a th:if="${pager.current > 1}" th:href="@{/admin/logs(page=${pager.current - 1})}">上一页</a>
-            <span th:text="${pager.current + ' / ' + pager.pages}"></span>
-            <a th:if="${pager.current < pager.pages}" th:href="@{/admin/logs(page=${pager.current + 1})}">下一页</a>
-        </nav>
-    </main>
+    <div class="workspace">
+        <header th:replace="~{fragments/admin :: top('登录日志')}"></header>
+        <main class="main">
+            <div class="page-head">
+                <div>
+                    <h1>登录日志</h1>
+                    <p class="page-desc">查看登录成功与失败记录。日志只读，不能删除或导出。</p>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>时间</th><th>账号</th><th>IP</th><th>结果</th><th>说明</th></tr></thead>
+                    <tbody>
+                    <tr th:if="${pager.records.isEmpty()}">
+                        <td class="empty" colspan="5">还没有登录记录。</td>
+                    </tr>
+                    <tr th:each="item : ${pager.records}">
+                        <td th:text="${item.loginTime != null and item.loginTime != 'null' ? (item.loginTime.length() >= 16 ? #strings.substring(item.loginTime,0,16) : item.loginTime) : '—'}">时间</td>
+                        <td th:text="${item.username != null and item.username != 'null' ? item.username : '—'}">用户</td>
+                        <td th:text="${item.ip != null and item.ip != 'null' and !#strings.isEmpty(item.ip) ? item.ip : '—'}">ip</td>
+                        <td>
+                            <span class="badge ok" th:if="${item.success == '1'}">成功</span>
+                            <span class="badge no" th:unless="${item.success == '1'}">失败</span>
+                        </td>
+                        <td th:text="${item.message != null and item.message != 'null' ? item.message : '—'}">说明</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <nav class="pager" th:if="${pager.pages > 1}">
+                <a th:if="${pager.current > 1}" th:href="@{/admin/logs(page=${pager.current - 1})}">上一页</a>
+                <span th:text="${pager.current + ' / ' + pager.pages}"></span>
+                <a th:if="${pager.current < pager.pages}" th:href="@{/admin/logs(page=${pager.current + 1})}">下一页</a>
+            </nav>
+        </main>
+    </div>
 </div>
 </body>
 </html>

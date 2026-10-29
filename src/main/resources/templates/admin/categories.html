@@ -4,50 +4,67 @@
 <body>
 <div class="shell">
     <aside th:replace="~{fragments/admin :: side('category')}"></aside>
-    <main class="main">
-        <div th:replace="~{fragments/admin :: top}"></div>
-        <h1>栏目和标签</h1>
-        <p class="flash" th:if="${msg}" th:text="${msg}"></p>
-        <div class="grid-2">
-            <form class="panel" action="/admin/categories" method="post" style="display:grid;gap:8px">
-                <h2>新增栏目</h2>
-                <input type="text" name="cname" placeholder="栏目名称" required>
-                <button type="submit">添加</button>
-            </form>
-            <form class="panel" action="/admin/tags" method="post" style="display:grid;gap:8px">
-                <h2>新增标签</h2>
-                <select name="cid" required>
-                    <option th:each="category : ${categories}" th:value="${category.cid}" th:text="${category.cname}"></option>
-                </select>
-                <input type="text" name="tname" placeholder="标签名称" required>
-                <button type="submit">添加</button>
-            </form>
-        </div>
-        <table style="margin-top:16px">
-            <thead><tr><th>栏目</th><th>文章</th><th>标签</th><th></th></tr></thead>
-            <tbody>
-            <tr th:each="category : ${categories}">
-                <td th:text="${category.cname}">栏目</td>
-                <td th:text="${category.articleCount}">0</td>
-                <td>
-                    <div th:each="item : ${tags}" th:if="${item.cid == category.cid}" class="inline" style="margin-bottom:6px">
-                        <span th:text="${item.tname}">标签</span>
-                        <form th:action="@{/admin/tags/delete}" method="post">
-                            <input type="hidden" name="tid" th:value="${item.tid}">
-                            <button class="danger" type="submit">删除</button>
-                        </form>
-                    </div>
-                </td>
-                <td>
-                    <form th:action="@{/admin/categories/delete}" method="post" onsubmit="return confirm('删除栏目会同时删除它的标签')">
-                        <input type="hidden" name="cid" th:value="${category.cid}">
-                        <button class="danger" type="submit">删除栏目</button>
-                    </form>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </main>
+    <div class="workspace">
+        <header th:replace="~{fragments/admin :: top('栏目')}"></header>
+        <main class="main">
+            <div class="page-head">
+                <div>
+                    <h1>栏目与标签</h1>
+                    <p class="page-desc">维护文章栏目，以及栏目下的标签。栏目里还有文章时不能删除。</p>
+                </div>
+            </div>
+            <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+            <div class="grid-2">
+                <form class="panel" action="/admin/categories" method="post">
+                    <h2>新增栏目</h2>
+                    <label>栏目名称<input type="text" name="cname" placeholder="1 到 30 个字符" required></label>
+                    <button type="submit">添加栏目</button>
+                </form>
+                <form class="panel" action="/admin/tags" method="post">
+                    <h2>新增标签</h2>
+                    <label>所属栏目
+                        <select name="cid" required>
+                            <option th:each="category : ${categories}" th:value="${category.cid}" th:text="${category.cname}"></option>
+                        </select>
+                    </label>
+                    <label>标签名称<input type="text" name="tname" placeholder="1 到 30 个字符" required></label>
+                    <button type="submit">添加标签</button>
+                </form>
+            </div>
+            <section class="section">
+                <h2>现有栏目</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>栏目</th><th class="num">文章</th><th>标签</th><th>操作</th></tr></thead>
+                        <tbody>
+                        <tr th:if="${categories.isEmpty()}">
+                            <td class="empty" colspan="4">还没有栏目。</td>
+                        </tr>
+                        <tr th:each="category : ${categories}">
+                            <td th:text="${category.cname}">栏目</td>
+                            <td class="num" th:text="${category.articleCount != null ? category.articleCount : 0}">0</td>
+                            <td>
+                                <div th:each="item : ${tags}" th:if="${item.cid == category.cid}" class="tag-row">
+                                    <span class="badge" th:text="${item.tname}">标签</span>
+                                    <form th:action="@{/admin/tags/delete}" method="post" onsubmit="return confirm('确定删除这个标签？')">
+                                        <input type="hidden" name="tid" th:value="${item.tid}">
+                                        <button class="danger" type="submit">删除</button>
+                                    </form>
+                                </div>
+                            </td>
+                            <td>
+                                <form th:action="@{/admin/categories/delete}" method="post" onsubmit="return confirm('删除栏目会同时删除它的标签')">
+                                    <input type="hidden" name="cid" th:value="${category.cid}">
+                                    <button class="danger" type="submit">删除栏目</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
 </div>
 </body>
 </html>

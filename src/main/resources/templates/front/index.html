@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/front :: head('首页')}"></head>
+<body>
+<header th:replace="~{fragments/front :: nav('home')}"></header>
+<main class="sheet">
+    <header class="mast">
+        <p class="eyebrow" th:text="${site['site_subtitle'] ?: '只要朝着一个方向努力，一切都会变得得心应手'}">副标题</p>
+        <p class="mast-meta">
+            <span th:text="${articleCount + ' 篇文章'}">0 篇文章</span>
+            <span th:text="${visitCount + ' 次阅读'}">0 次阅读</span>
+            <span th:text="${messageCount + ' 条留言'}">0 条留言</span>
+        </p>
+    </header>
+
+    <div class="bulletin" th:each="notice : ${notices}">
+        <span>公告</span>
+        <strong th:text="${notice.title}">标题</strong>
+        <em th:text="${notice.content}">内容</em>
+    </div>
+
+    <div class="layout">
+        <div>
+            <a class="feature" th:each="a, iter : ${latest}" th:if="${iter.first}"
+               th:href="@{/article/{id}(id=${a.aid})}"
+               th:classappend="${!@fmt.logoOk(a.logo)} ? 'plain'">
+                <div>
+                    <p class="entry-kicker">
+                        <span>最新</span>
+                        <span th:text="${a.categoryName}">栏目</span>
+                        <span th:text="${a.createTime == null ? '' : (a.createTime.length() >= 10 ? #strings.substring(a.createTime,0,10) : a.createTime)}">日期</span>
+                    </p>
+                    <h2 th:text="${a.title}">标题</h2>
+                    <p class="dek" th:if="${a.digest != null and !#strings.isEmpty(a.digest)}"
+                       th:text="${#strings.abbreviate(a.digest, 180)}">摘要</p>
+                    <p class="go">阅读全文</p>
+                </div>
+                <img th:if="${@fmt.logoOk(a.logo)}" th:src="${a.logo}" alt="">
+            </a>
+            <p class="empty" th:if="${latest.isEmpty()}">还没有公开文章。</p>
+
+            <div class="stream" th:if="${latest.size() > 1}">
+                <p class="rail-label">更早的文章</p>
+                <article class="entry" th:each="a, iter : ${latest}" th:unless="${iter.first}"
+                         th:classappend="${@fmt.logoOk(a.logo)} ? 'has-cover'">
+                    <div>
+                        <p class="entry-kicker">
+                            <span th:text="${a.categoryName}">栏目</span>
+                            <span th:text="${a.createTime == null ? '' : (a.createTime.length() >= 10 ? #strings.substring(a.createTime,0,10) : a.createTime)}">日期</span>
+                            <span th:if="${a.isHot == 1}">热门</span>
+                        </p>
+                        <h2><a th:href="@{/article/{id}(id=${a.aid})}" th:text="${a.title}">标题</a></h2>
+                        <p class="excerpt" th:if="${a.digest != null and !#strings.isEmpty(a.digest)}"
+                           th:text="${#strings.abbreviate(a.digest, 110)}">摘要</p>
+                    </div>
+                    <img th:if="${@fmt.logoOk(a.logo)}" th:src="${a.logo}" alt="">
+                </article>
+                <p class="more-line"><a href="/articles">全部文章</a></p>
+            </div>
+        </div>
+        <aside class="rail">
+            <h2>栏目</h2>
+            <a th:each="category : ${categories}" th:href="@{/articles(cid=${category.cid})}" th:title="${@fmt.blurb(category.cname)}">
+                <span th:text="${category.cname}">栏目</span>
+                <span th:text="${category.articleCount}">0</span>
+            </a>
+            <h2>热门</h2>
+            <div class="hot-list">
+                <a th:each="a : ${hot}" th:href="@{/article/{id}(id=${a.aid})}" th:text="${a.title}">标题</a>
+            </div>
+        </aside>
+    </div>
+</main>
+<footer th:replace="~{fragments/front :: foot}"></footer>
+</body>
+</html>

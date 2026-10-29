@@ -1,0 +1,314 @@
+package com.blog.service;
+
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.blog.common.BizException;
+import com.blog.common.Fmt;
+import com.blog.common.Texts;
+import com.blog.entity.Article;
+import com.blog.entity.Category;
+import com.blog.entity.Tag;
+import com.blog.entity.User;
+import com.blog.mapper.ArticleMapper;
+import com.blog.mapper.CategoryMapper;
+import com.blog.mapper.TagMapper;
+import com.blog.mapper.UserMapper;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+@Service
+public class ArticleService {
+
+    private final ArticleMapper articleMapper;
+    private final CategoryMapper categoryMapper;
+    private final TagMapper tagMapper;
+    private final UserMapper userMapper;
+    private final SmartService smartService;
+    private final Fmt fmt;
+
+    public ArticleService(ArticleMapper articleMapper, CategoryMapper categoryMapper, TagMapper tagMapper,
+                          UserMapper userMapper, SmartService smartService, Fmt fmt) {
+        this.articleMapper = articleMapper;
+        this.categoryMapper = categoryMapper;
+        this.tagMapper = tagMapper;
+        this.userMapper = userMapper;
+        this.smartService = smartService;
+        this.fmt = fmt;
+    }
+
+    public Page<Article> pagePublic(long page, long size, Integer cid, String q, String tag) {
+        QueryWrapper<Article> wrapper = publicWrapper(cid, q, tag);
+        Page<Article> result = articleMapper.selectPage(new Page<Article>(page, size), wrapper);
+        fill(result.getRecords());
+        return result;
+    }
+
+    public Page<Article> pageAdmin(long page, long size, String title) {
+        QueryWrapper<Article> wrapper = new QueryWrapper<Article>().orderByDesc("aid");
+        if (!Texts.blank(title)) {
+            wrapper.like("title", title.trim());
+        }
+        Page<Article> result = articleMapper.selectPage(new Page<Article>(page, size), wrapper);
+        fill(result.getRecords());
+        return result;
+    }
+
+    public List<Article> latest(int limit) {
+        List<Article> list = articleMapper.selectList(new QueryWrapper<Article>()
+                .eq("isOpen", "1")
+                .orderByDesc("is_hot")
+                .orderByDesc("create_time")
+                .orderByDesc("aid")
+                .last("limit " + limit));
+        fill(list);
+        return list;
+    }
+
+    public List<Article> hot(int limit) {
+        List<Article> list = articleMapper.selectList(new QueryWrapper<Article>()
+                .eq("isOpen", "1")
+                .orderByDesc("visit_count")
+                .orderByDesc("aid")
+                .last("limit " + limit));
+        fill(list);
+        return list;
+    }
+
+    public Article detail(Integer id, boolean allowPrivate) {
+        Article article = articleMapper.selectById(id);
+        if (article == null) {
+            throw new BizException("文章不存在");
+        }
+        if (!"1".equals(article.getIsOpen()) && !allowPrivate) {
+            throw new BizException("这篇文章还没有公开");
+        }
+        if ("1".equals(article.getIsOpen())) {
+            articleMapper.update(null, new UpdateWrapper<Article>()
+                    .eq("aid", id)
+                    .setSql("visit_count = IFNULL(visit_count,0) + 1"));
+            article.setVisitCount(article.getVisitCount() == null ? 1 : article.getVisitCount() + 1);
+        }
+        fill(Collections.singletonList(article));
+        return article;
+    }
+
+    public Article get(Integer id) {
+        Article article = articleMapper.selectById(id);
+        if (article == null) {
+            throw new BizException("文章不存在");
+        }
+        fill(Collections.singletonList(article));
+        return article;
+    }
+
+    public List<Article> related(Article current, int limit) {
+        List<Article> pool = articleMapper.selectList(new QueryWrapper<Article>()
+                .eq("isOpen", "1")
+                .ne("aid", current.getAid())
+                .orderByDesc("visit_count")
+                .last("limit 30"));
+        final Set<String> tags = new HashSet<String>(fmt.tags(current.getTagNames()));
+        Collections.sort(pool, new Comparator<Article>() {
+            @Override
+            public int compare(Article a, Article b) {
+                int scoreA = score(a, current, tags);
+                int scoreB = score(b, current, tags);
+                if (scoreA != scoreB) {
+                    return scoreB - scoreA;
+                }
+                int visitA = a.getVisitCount() == null ? 0 : a.getVisitCount();
+                int visitB = b.getVisitCount() == null ? 0 : b.getVisitCount();
+                return visitB - visitA;
+            }
+        });
+        if (pool.size() > limit) {
+            pool = new ArrayList<Article>(pool.subList(0, limit));
+        }
+        fill(pool);
+        return pool;
+    }
+
+    public void save(Article form, User user, String logo) {
+        if (Texts.blank(form.getTitle())) {
+            throw new BizException("请填写标题");
+        }
+        if (Texts.blank(form.getContent())) {
+            throw new BizException("请填写正文");
+        }
+        if (form.getCid() == null) {
+            throw new BizException("请选择栏目");
+        }
+        if (categoryMapper.selectById(form.getCid()) == null) {
+            throw new BizException("栏目不存在");
+        }
+        Article article = form.getAid() == null ? new Article() : articleMapper.selectById(form.getAid());
+        if (form.getAid() != null && article == null) {
+            throw new BizException("文章不存在");
+        }
+        article.setTitle(Texts.cut(form.getTitle(), 255));
+        article.setContent(form.getContent());
+        article.setCid(form.getCid());
+        article.setTagNames(Texts.cut(normalizeTags(form.getTagNames()), 255));
+        article.setIsOpen("0".equals(form.getIsOpen()) ? "0" : "1");
+        article.setIsHot(form.getIsHot() != null && form.getIsHot() == 1 ? 1 : 0);
+        if (!Texts.blank(logo)) {
+            article.setLogo(logo);
+        }
+        if (Texts.blank(form.getDigest())) {
+            article.setDigest(smartService.digest(form.getContent()));
+        } else {
+            article.setDigest(form.getDigest());
+        }
+        if (form.getAid() == null) {
+            article.setUid(user.getUid());
+            article.setVisitCount(0);
+            article.setThumbsUp(0L);
+            article.setIsCommented("0");
+            article.setCreateTime(Texts.now());
+            articleMapper.insert(article);
+            form.setAid(article.getAid());
+        } else {
+            article.setUpdateTime(Texts.now());
+            articleMapper.updateById(article);
+        }
+    }
+
+    public void delete(Integer id) {
+        if (articleMapper.deleteById(id) == 0) {
+            throw new BizException("文章不存在");
+        }
+    }
+
+    public void updateOpen(Integer id, String isOpen) {
+        articleMapper.update(null, new UpdateWrapper<Article>()
+                .eq("aid", id)
+                .set("isOpen", "1".equals(isOpen) ? "1" : "0"));
+    }
+
+    public void updateHot(Integer id, Integer isHot) {
+        articleMapper.update(null, new UpdateWrapper<Article>()
+                .eq("aid", id)
+                .set("is_hot", isHot != null && isHot == 1 ? 1 : 0));
+    }
+
+    public long like(Integer id) {
+        Article article = articleMapper.selectById(id);
+        if (article == null || !"1".equals(article.getIsOpen())) {
+            throw new BizException("文章不存在");
+        }
+        articleMapper.update(null, new UpdateWrapper<Article>()
+                .eq("aid", id)
+                .setSql("thumbsUp = IFNULL(thumbsUp,0) + 1"));
+        Article fresh = articleMapper.selectById(id);
+        return fresh.getThumbsUp() == null ? 0L : fresh.getThumbsUp();
+    }
+
+    public void markCommented(Integer aid) {
+        articleMapper.update(null, new UpdateWrapper<Article>().eq("aid", aid).set("isCommented", "1"));
+    }
+
+    public long count() {
+        Long count = articleMapper.selectCount(null);
+        return count == null ? 0 : count;
+    }
+
+    public long publicCount() {
+        Long count = articleMapper.selectCount(new QueryWrapper<Article>().eq("isOpen", "1"));
+        return count == null ? 0 : count;
+    }
+
+    public long visits() {
+        Long sum = articleMapper.sumVisits();
+        return sum == null ? 0 : sum;
+    }
+
+    public Map<Integer, Long> countByCategory() {
+        Map<Integer, Long> map = new HashMap<Integer, Long>();
+        List<Article> articles = articleMapper.selectList(new QueryWrapper<Article>().select("aid", "cid", "isOpen").eq("isOpen", "1"));
+        for (Article article : articles) {
+            if (article.getCid() == null) {
+                continue;
+            }
+            Long count = map.get(article.getCid());
+            map.put(article.getCid(), count == null ? 1L : count + 1);
+        }
+        return map;
+    }
+
+    private QueryWrapper<Article> publicWrapper(Integer cid, String q, String tag) {
+        QueryWrapper<Article> wrapper = new QueryWrapper<Article>().eq("isOpen", "1");
+        if (cid != null) {
+            wrapper.eq("cid", cid);
+        }
+        if (!Texts.blank(tag)) {
+            wrapper.like("tagNames", tag.trim());
+        }
+        if (!Texts.blank(q)) {
+            String keyword = q.trim();
+            wrapper.and(w -> w.like("title", keyword).or().like("digest", keyword).or().like("content", keyword));
+        }
+        wrapper.orderByDesc("is_hot").orderByDesc("create_time").orderByDesc("aid");
+        return wrapper;
+    }
+
+    private int score(Article article, Article current, Set<String> tags) {
+        int score = smartService.overlap(article.getTagNames(), tags) * 5;
+        if (current.getCid() != null && current.getCid().equals(article.getCid())) {
+            score += 3;
+        }
+        if (article.getIsHot() != null && article.getIsHot() == 1) {
+            score += 1;
+        }
+        return score;
+    }
+
+    private String normalizeTags(String tagNames) {
+        List<String> tags = fmt.tags(tagNames);
+        if (tags.isEmpty()) {
+            return "";
+        }
+        StringBuilder builder = new StringBuilder();
+        for (String tag : tags) {
+            if (builder.length() > 0) {
+                builder.append(", ");
+            }
+            builder.append(tag);
+        }
+        return builder.toString();
+    }
+
+    private void fill(List<Article> articles) {
+        if (articles == null || articles.isEmpty()) {
+            return;
+        }
+        Map<Integer, String> categories = new HashMap<Integer, String>();
+        for (Category category : categoryMapper.selectList(null)) {
+            categories.put(category.getCid(), category.getCname());
+        }
+        Map<Integer, String> authors = new HashMap<Integer, String>();
+        for (User user : userMapper.selectList(null)) {
+            authors.put(user.getUid(), Texts.blank(user.getNickname()) ? user.getUsername() : user.getNickname());
+        }
+        List<String> dictionary = new ArrayList<String>();
+        for (Tag tag : tagMapper.selectList(null)) {
+            if (!Texts.blank(tag.getTname())) {
+                dictionary.add(tag.getTname());
+            }
+        }
+        for (Article article : articles) {
+            article.setCategoryName(categories.containsKey(article.getCid()) ? categories.get(article.getCid()) : "未分类");
+            article.setAuthorName(authors.containsKey(article.getUid()) ? authors.get(article.getUid()) : "佚名");
+            article.setReadingMinutes(smartService.minutes(article.getContent()));
+            article.setKeywords(smartService.keywords(article.getTitle(), article.getContent(), article.getTagNames(), dictionary));
+        }
+    }
+}

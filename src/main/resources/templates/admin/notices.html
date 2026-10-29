@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/admin :: head('公告')}"></head>
+<body>
+<div class="shell">
+    <aside th:replace="~{fragments/admin :: side('notice')}"></aside>
+    <main class="main">
+        <div th:replace="~{fragments/admin :: top}"></div>
+        <h1>公告</h1>
+        <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+        <form class="panel" action="/admin/notices" method="post" style="display:grid;gap:8px;margin-bottom:16px">
+            <input th:if="${notice.id != null}" type="hidden" name="id" th:value="${notice.id}">
+            <input type="text" name="title" placeholder="标题" th:value="${notice.title}" required>
+            <textarea name="content" required th:text="${notice.content}"></textarea>
+            <label class="check"><input type="checkbox" name="isTop" value="1" th:checked="${notice.isTop == '1'}"> 置顶</label>
+            <button type="submit">保存</button>
+        </form>
+        <table>
+            <thead><tr><th>公告</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="item : ${notices}">
+                <td>
+                    <b th:text="${item.title}">标题</b>
+                    <span class="muted" th:if="${item.isTop == '1'}">置顶</span>
+                    <div th:text="${item.content}">内容</div>
+                </td>
+                <td class="tools">
+                    <a class="btn line" th:href="@{/admin/notices(id=${item.id})}">编辑</a>
+                    <form th:action="@{/admin/notices/delete}" method="post">
+                        <input type="hidden" name="id" th:value="${item.id}">
+                        <button class="danger" type="submit">删除</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+</body>
+</html>

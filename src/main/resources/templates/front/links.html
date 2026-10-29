@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/front :: head('友链')}"></head>
+<body>
+<header th:replace="~{fragments/front :: nav('links')}"></header>
+<main class="wrap section">
+    <h1 class="page-title">友链</h1>
+    <div class="grid-3">
+        <a class="panel" th:each="link : ${links}" th:href="${link.siteUrl}" target="_blank" rel="noopener noreferrer">
+            <h3 th:text="${link.siteName}">名称</h3>
+            <p th:text="${link.siteDesc}">描述</p>
+            <span class="muted" th:text="${link.siteUrl}">地址</span>
+        </a>
+        <p class="muted" th:if="${links.isEmpty()}">还没有友链。</p>
+    </div>
+</main>
+<footer th:replace="~{fragments/front :: foot}"></footer>
+</body>
+</html>

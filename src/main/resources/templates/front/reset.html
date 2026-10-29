@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/front :: head('重置密码')}"></head>
+<body>
+<a class="auth-brand" href="/" th:text="${site['site_name'] ?: '智能博客'}">智能博客</a>
+<main class="auth">
+    <div class="auth-glass">
+        <h1>重置密码</h1>
+        <p class="auth-lead">需要用户名，以及注册时填写的手机号</p>
+        <p class="error" th:if="${error}" th:text="${error}"></p>
+        <form class="reply" action="/reset" method="post">
+            <label>用户名
+                <input type="text" name="username" autocomplete="username" required>
+            </label>
+            <label>手机号
+                <input type="text" name="phone" maxlength="11" required>
+            </label>
+            <label>新密码
+                <input type="password" name="password" autocomplete="new-password" required>
+            </label>
+            <label>验证码
+                <span class="captcha">
+                    <input type="text" name="code" maxlength="4" autocomplete="off" required>
+                    <img src="/captcha" alt="验证码，点击换一张" onclick="this.src='/captcha?ts=' + Date.now()">
+                </span>
+            </label>
+            <button type="submit">重置密码</button>
+        </form>
+        <nav class="auth-links">
+            <a href="/login">返回登录</a>
+        </nav>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/admin :: head('文章')}"></head>
+<body>
+<div class="shell">
+    <aside th:replace="~{fragments/admin :: side('article')}"></aside>
+    <main class="main">
+        <div th:replace="~{fragments/admin :: top}"></div>
+        <div class="topbar">
+            <h1>文章</h1>
+            <a class="btn" href="/admin/articles/edit">写文章</a>
+        </div>
+        <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+        <form class="inline" action="/admin/articles" method="get" style="margin-bottom:12px">
+            <input type="text" name="title" placeholder="按标题搜索" th:value="${title}">
+            <button type="submit">搜索</button>
+        </form>
+        <table>
+            <thead>
+            <tr><th>标题</th><th>栏目</th><th>状态</th><th>阅读</th><th>时间</th><th></th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="a : ${pager.records}">
+                <td>
+                    <a th:href="@{/article/{id}(id=${a.aid})}" th:text="${a.title}">标题</a>
+                    <div class="muted" th:text="${a.tagNames}">标签</div>
+                </td>
+                <td th:text="${a.categoryName}">栏目</td>
+                <td>
+                    <div th:text="${a.isOpen == '1' ? '公开' : '私密'}">公开</div>
+                    <div th:text="${a.isHot == 1 ? '热门' : ''}">热门</div>
+                </td>
+                <td th:text="${a.visitCount ?: 0}">0</td>
+                <td th:text="${a.createTime}">时间</td>
+                <td class="tools">
+                    <a class="btn line" th:href="@{/admin/articles/edit(id=${a.aid})}">编辑</a>
+                    <form th:action="@{/admin/articles/open}" method="post">
+                        <input type="hidden" name="id" th:value="${a.aid}">
+                        <input type="hidden" name="isOpen" th:value="${a.isOpen == '1' ? '0' : '1'}">
+                        <button class="line" type="submit" th:text="${a.isOpen == '1' ? '设为私密' : '公开'}">公开</button>
+                    </form>
+                    <form th:action="@{/admin/articles/hot}" method="post">
+                        <input type="hidden" name="id" th:value="${a.aid}">
+                        <input type="hidden" name="isHot" th:value="${a.isHot == 1 ? 0 : 1}">
+                        <button class="line" type="submit" th:text="${a.isHot == 1 ? '取消热门' : '设为热门'}">热门</button>
+                    </form>
+                    <form th:action="@{/admin/articles/delete}" method="post" onsubmit="return confirm('确定删除这篇文章？')">
+                        <input type="hidden" name="id" th:value="${a.aid}">
+                        <button class="danger" type="submit">删除</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <nav class="pager" th:if="${pager.pages > 1}">
+            <a th:if="${pager.current > 1}" th:href="@{/admin/articles(page=${pager.current - 1}, title=${title})}">上一页</a>
+            <span th:text="${pager.current + ' / ' + pager.pages}"></span>
+            <a th:if="${pager.current < pager.pages}" th:href="@{/admin/articles(page=${pager.current + 1}, title=${title})}">下一页</a>
+        </nav>
+    </main>
+</div>
+</body>
+</html>

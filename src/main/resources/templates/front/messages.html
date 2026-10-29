@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/front :: head('留言')}"></head>
+<body>
+<header th:replace="~{fragments/front :: nav('messages')}"></header>
+<main class="read">
+    <header class="read-head">
+        <h1>留言板</h1>
+        <p class="read-meta">写下来，审核通过后会出现在下面。</p>
+    </header>
+
+    <div id="toast" class="toast" th:if="${note}" th:text="${note}">提示</div>
+    <div id="toast" class="toast bad" th:if="${noteError}" th:text="${noteError}">错误</div>
+
+    <form class="board-form" th:if="${allowComment}" th:action="@{/messages}" method="post" novalidate>
+        <input type="hidden" name="page" th:value="${pager.current}">
+        <p class="you" th:if="${loginUser != null}">
+            你的昵称：<b th:text="${loginUser.nickname != null ? loginUser.nickname : loginUser.username}">昵称</b>
+        </p>
+        <label th:if="${loginUser == null}">昵称
+            <input type="text" name="nickname" maxlength="16" placeholder="怎么称呼你">
+        </label>
+        <label>留言
+            <span class="field">
+                <textarea name="content" maxlength="500" placeholder="想说的话"></textarea>
+                <span class="remain">剩余 500 字</span>
+            </span>
+        </label>
+        <div id="captcha-home" th:if="${loginUser == null}">
+            <label id="captcha-box">验证码
+                <span class="captcha">
+                    <input type="text" name="code" maxlength="4" placeholder="右侧字符" autocomplete="off">
+                    <img src="/captcha" alt="验证码，点击换一张" onclick="this.src='/captcha?ts=' + Date.now()">
+                </span>
+            </label>
+        </div>
+        <div class="board-actions">
+            <button type="submit">提交留言</button>
+        </div>
+    </form>
+    <p class="empty-note" th:unless="${allowComment}">留言已关闭。</p>
+
+    <section class="notes">
+        <article class="note-card" th:each="item : ${pager.records}">
+            <header class="note-top">
+                <span class="avatar" th:text="${item.initial}" th:style="'background:' + ${item.avatarColor}">友</span>
+                <b th:text="${item.nickname}">昵称</b>
+                <em class="tag-wait" th:if="${item.status == '0'}">待审核</em>
+                <time th:text="${item.createTime}">时间</time>
+            </header>
+            <p class="note-body" th:text="${item.content}">内容</p>
+            <div class="note-reply" th:if="${item.reply != null and !#strings.isEmpty(item.reply)}">
+                <span>回复</span>
+                <p th:text="${item.reply}">回复</p>
+            </div>
+            <div class="note-replies" th:if="${item.replies != null and !item.replies.isEmpty()}">
+                <article class="note-card sub" th:each="reply : ${item.replies}">
+                    <header class="note-top">
+                        <span class="avatar" th:text="${reply.initial}" th:style="'background:' + ${reply.avatarColor}">友</span>
+                        <b th:text="${reply.nickname}">昵称</b>
+                        <em class="tag-wait" th:if="${reply.status == '0'}">待审核</em>
+                        <time th:text="${reply.createTime}">时间</time>
+                    </header>
+                    <p class="note-body" th:text="${reply.content}">回复</p>
+                    <div class="note-foot" th:if="${reply.canDelete}">
+                        <form th:action="@{/messages/delete}" method="post" onsubmit="return confirm('确定删除这条留言？')">
+                            <input type="hidden" name="id" th:value="${reply.id}">
+                            <input type="hidden" name="page" th:value="${pager.current}">
+                            <button class="text-btn" type="submit">删除</button>
+                        </form>
+                    </div>
+                </article>
+            </div>
+            <div class="note-foot">
+                <button class="text-btn reply-toggle" type="button" th:if="${allowComment}">回复</button>
+                <form th:if="${item.canDelete}" th:action="@{/messages/delete}" method="post" onsubmit="return confirm('确定删除这条留言？')">
+                    <input type="hidden" name="id" th:value="${item.id}">
+                    <input type="hidden" name="page" th:value="${pager.current}">
+                    <button class="text-btn" type="submit">删除</button>
+                </form>
+            </div>
+            <form class="reply-box" th:if="${allowComment}" th:action="@{/messages}" method="post" hidden novalidate>
+                <input type="hidden" name="page" th:value="${pager.current}">
+                <input type="hidden" name="parentId" th:value="${item.id}">
+                <p class="you" th:if="${loginUser != null}">以当前昵称回复</p>
+                <label th:if="${loginUser == null}">昵称
+                    <input type="text" name="nickname" maxlength="16" placeholder="怎么称呼你">
+                </label>
+                <label>回复
+                    <span class="field">
+                        <textarea name="content" maxlength="500" placeholder="回复这条留言"></textarea>
+                        <span class="remain">剩余 500 字</span>
+                    </span>
+                </label>
+                <div class="captcha-hold"></div>
+                <div class="board-actions">
+                    <button type="submit">提交回复</button>
+                </div>
+            </form>
+        </article>
+        <p class="empty-note" th:if="${pager.records.isEmpty()}">还没有留言，欢迎你来第一条留言～</p>
+        <nav class="pager" th:if="${pager.pages > 1}">
+            <a th:if="${pager.current > 1}" th:href="@{/messages(page=${pager.current - 1})}">上一页</a>
+            <span th:text="${pager.current + ' / ' + pager.pages}">1 / 1</span>
+            <a th:if="${pager.current < pager.pages}" th:href="@{/messages(page=${pager.current + 1})}">下一页</a>
+        </nav>
+    </section>
+</main>
+<footer th:replace="~{fragments/front :: foot}"></footer>
+<script>
+(function () {
+    var live = document.querySelector(".toast");
+    if (live) {
+        setTimeout(function () { live.remove(); }, 3200);
+    }
+    function toast(text) {
+        var old = document.querySelector(".toast");
+        if (old) old.remove();
+        var el = document.createElement("div");
+        el.className = "toast bad";
+        el.textContent = text;
+        document.body.appendChild(el);
+        setTimeout(function () { el.remove(); }, 3200);
+    }
+    function bindCount(area) {
+        var tip = area.parentElement.querySelector(".remain");
+        if (!tip) return;
+        var paint = function () {
+            var left = 500 - area.value.length;
+            tip.textContent = "剩余 " + (left < 0 ? 0 : left) + " 字";
+        };
+        area.addEventListener("input", paint);
+        paint();
+    }
+    document.querySelectorAll(".field textarea").forEach(bindCount);
+    document.querySelectorAll(".reply-toggle").forEach(function (button) {
+        button.addEventListener("click", function () {
+            var card = button.closest(".note-card");
+            var box = card.querySelector(".reply-box");
+            var opening = box.hasAttribute("hidden");
+            document.querySelectorAll(".reply-box").forEach(function (el) { el.setAttribute("hidden", ""); });
+            var captcha = document.getElementById("captcha-box");
+            var home = document.getElementById("captcha-home");
+            if (captcha && home && !home.contains(captcha)) home.appendChild(captcha);
+            if (!opening) return;
+            box.removeAttribute("hidden");
+            var hold = box.querySelector(".captcha-hold");
+            if (captcha && hold) hold.appendChild(captcha);
+            var area = box.querySelector("textarea");
+            if (area) area.focus();
+        });
+    });
+    document.querySelectorAll("form.board-form, form.reply-box").forEach(function (form) {
+        form.addEventListener("submit", function (event) {
+            var nick = form.querySelector("[name=nickname]");
+            var body = form.querySelector("[name=content]");
+            var code = form.querySelector("[name=code]");
+            var text = body ? body.value.trim() : "";
+            if (nick && !nick.value.trim()) { event.preventDefault(); toast("请填写昵称"); return; }
+            if (!text) { event.preventDefault(); toast("请填写留言"); return; }
+            if (text.length > 500) { event.preventDefault(); toast("留言不能超过 500 字"); return; }
+            if (/https?:\/\/|www\./i.test(text) || (nick && /https?:\/\/|www\./i.test(nick.value))) {
+                event.preventDefault();
+                toast("内容里不能留网址");
+                return;
+            }
+            if (code && !code.value.trim()) { event.preventDefault(); toast("请填写验证码"); }
+        });
+    });
+})();
+</script>
+</body>
+</html>

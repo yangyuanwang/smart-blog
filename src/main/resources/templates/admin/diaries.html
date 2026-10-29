@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/admin :: head('日记')}"></head>
+<body>
+<div class="shell">
+    <aside th:replace="~{fragments/admin :: side('diary')}"></aside>
+    <main class="main">
+        <div th:replace="~{fragments/admin :: top}"></div>
+        <h1>日记</h1>
+        <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+        <form class="panel" action="/admin/diaries" method="post" style="display:grid;gap:8px;margin-bottom:16px">
+            <input th:if="${diary != null and diary.id != null}" type="hidden" name="id" th:value="${diary.id}">
+            <input type="text" name="title" placeholder="标题" th:value="${diary != null ? diary.title : ''}" required>
+            <input type="text" name="mood" placeholder="心情，例如 随记" th:value="${diary != null ? diary.mood : ''}">
+            <textarea name="content" required th:text="${diary != null ? diary.content : ''}"></textarea>
+            <button type="submit">保存</button>
+        </form>
+        <table>
+            <thead><tr><th>时间</th><th>日记</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="item : ${diaries}">
+                <td th:text="${item.createTime}">时间</td>
+                <td><b th:text="${item.title}">标题</b><div th:text="${item.content}">内容</div></td>
+                <td class="tools">
+                    <a class="btn line" th:href="@{/admin/diaries(id=${item.id})}">编辑</a>
+                    <form th:action="@{/admin/diaries/delete}" method="post">
+                        <input type="hidden" name="id" th:value="${item.id}">
+                        <button class="danger" type="submit">删除</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+</body>
+</html>

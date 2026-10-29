@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/admin :: head('用户')}"></head>
+<body>
+<div class="shell">
+    <aside th:replace="~{fragments/admin :: side('user')}"></aside>
+    <main class="main">
+        <div th:replace="~{fragments/admin :: top}"></div>
+        <h1>用户</h1>
+        <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+        <form class="inline" action="/admin/users" method="get" style="margin-bottom:12px">
+            <input type="text" name="keyword" placeholder="用户名或昵称" th:value="${keyword}">
+            <button type="submit">搜索</button>
+        </form>
+        <table>
+            <thead><tr><th>用户</th><th>角色</th><th>状态</th><th>手机</th><th>登录</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="item : ${pager.records}">
+                <td>
+                    <b th:text="${item.username}">用户名</b>
+                    <div class="muted" th:text="${item.nickname}">昵称</div>
+                </td>
+                <td th:text="${@fmt.roleName(item.role, item.username)}">角色</td>
+                <td th:text="${@fmt.stateName(item.state)}">状态</td>
+                <td th:text="${item.phone}">手机</td>
+                <td th:text="${(item.loginCount ?: 0) + ' 次'}">次数</td>
+                <td class="tools">
+                    <form th:action="@{/admin/users/state}" method="post">
+                        <input type="hidden" name="uid" th:value="${item.uid}">
+                        <input type="hidden" name="state" th:value="${item.state == '0' ? '1' : '0'}">
+                        <button class="line" type="submit" th:text="${item.state == '0' ? '解锁' : '锁定'}">锁定</button>
+                    </form>
+                    <form th:action="@{/admin/users/role}" method="post" class="inline">
+                        <input type="hidden" name="uid" th:value="${item.uid}">
+                        <select name="role">
+                            <option value="0" th:selected="${item.role == '0'}">管理员</option>
+                            <option value="1" th:selected="${item.role != '0'}">普通用户</option>
+                        </select>
+                        <button class="line" type="submit">改角色</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+</body>
+</html>

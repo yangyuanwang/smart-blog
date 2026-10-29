@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/admin :: head('评论')}"></head>
+<body>
+<div class="shell">
+    <aside th:replace="~{fragments/admin :: side('comment')}"></aside>
+    <main class="main">
+        <div th:replace="~{fragments/admin :: top}"></div>
+        <h1>评论</h1>
+        <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+        <div class="tools" style="margin-bottom:12px">
+            <a href="/admin/comments">全部</a>
+            <a href="/admin/comments?status=1">已通过</a>
+            <a href="/admin/comments?status=0">待审核</a>
+        </div>
+        <table>
+            <thead><tr><th>文章</th><th>评论</th><th>状态</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="item : ${pager.records}">
+                <td th:text="${item.articleTitle}">文章</td>
+                <td>
+                    <b th:text="${item.nickname}">昵称</b>
+                    <div th:text="${item.content}">内容</div>
+                    <div class="muted" th:text="${item.createTime}">时间</div>
+                </td>
+                <td th:text="${item.status == '1' ? '通过' : '待审'}">状态</td>
+                <td class="tools">
+                    <form th:action="@{/admin/comments/status}" method="post">
+                        <input type="hidden" name="id" th:value="${item.id}">
+                        <input type="hidden" name="status" th:value="${item.status == '1' ? '0' : '1'}">
+                        <button class="line" type="submit" th:text="${item.status == '1' ? '隐藏' : '通过'}">通过</button>
+                    </form>
+                    <form th:action="@{/admin/comments/delete}" method="post">
+                        <input type="hidden" name="id" th:value="${item.id}">
+                        <button class="danger" type="submit">删除</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="muted" th:if="${pager.records.isEmpty()}">没有评论。</p>
+    </main>
+</div>
+</body>
+</html>

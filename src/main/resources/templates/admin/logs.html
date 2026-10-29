@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/admin :: head('登录日志')}"></head>
+<body>
+<div class="shell">
+    <aside th:replace="~{fragments/admin :: side('log')}"></aside>
+    <main class="main">
+        <div th:replace="~{fragments/admin :: top}"></div>
+        <h1>登录日志</h1>
+        <table>
+            <thead><tr><th>时间</th><th>用户</th><th>IP</th><th>结果</th><th>说明</th></tr></thead>
+            <tbody>
+            <tr th:each="item : ${pager.records}">
+                <td th:text="${item.loginTime}">时间</td>
+                <td th:text="${item.username}">用户</td>
+                <td th:text="${item.ip}">ip</td>
+                <td th:text="${item.success == '1' ? '成功' : '失败'}">结果</td>
+                <td th:text="${item.message}">说明</td>
+            </tr>
+            </tbody>
+        </table>
+        <nav class="pager" th:if="${pager.pages > 1}">
+            <a th:if="${pager.current > 1}" th:href="@{/admin/logs(page=${pager.current - 1})}">上一页</a>
+            <span th:text="${pager.current + ' / ' + pager.pages}"></span>
+            <a th:if="${pager.current < pager.pages}" th:href="@{/admin/logs(page=${pager.current + 1})}">下一页</a>
+        </nav>
+    </main>
+</div>
+</body>
+</html>

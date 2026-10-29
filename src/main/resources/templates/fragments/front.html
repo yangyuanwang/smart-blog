@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(pageTitle)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle + ' · ' + (site['site_name'] ?: '智能博客')}">智能博客</title>
+    <link rel="stylesheet" th:href="@{/css/site.css(v=15)}">
+</head>
+<body>
+<header th:fragment="nav(active)" class="top">
+    <div class="wrap top-inner">
+        <a class="brand" href="/"><i></i><span th:text="${site['site_name'] ?: '智能博客'}">智能博客</span></a>
+        <input id="nav-toggle" class="nav-toggle" type="checkbox">
+        <label class="nav-burger" for="nav-toggle"><span class="nav-burger-icon"></span><span class="sr">菜单</span></label>
+        <nav class="menu">
+            <div class="menu-main">
+                <a href="/" th:classappend="${active == 'home'} ? 'on'">首页</a>
+                <a href="/articles" th:classappend="${active == 'articles'} ? 'on'">博客</a>
+                <a href="/messages" th:classappend="${active == 'messages'} ? 'on'">留言</a>
+                <a href="/diaries" th:classappend="${active == 'diaries'} ? 'on'">日记</a>
+                <a href="/links" th:classappend="${active == 'links'} ? 'on'">友链</a>
+                <a href="/about" th:classappend="${active == 'about'} ? 'on'">关于</a>
+            </div>
+            <div class="menu-ops">
+                <a th:if="${loginUser != null and T(com.blog.service.UserService).isAdmin(loginUser)}" href="/admin">后台</a>
+                <a th:if="${loginUser == null}" href="/login">登录</a>
+                <span class="who" th:if="${loginUser != null}" th:text="${loginUser.nickname != null ? loginUser.nickname : loginUser.username}">用户</span>
+                <form th:if="${loginUser != null}" th:action="@{/logout}" method="post">
+                    <button class="out" type="submit">退出</button>
+                </form>
+            </div>
+        </nav>
+    </div>
+    <div class="flash" th:if="${msg}" th:text="${msg}"></div>
+</header>
+<footer th:fragment="foot" class="foot">
+    <div class="wrap foot-inner">
+        <span th:text="${site['footer'] ?: 'Spring Boot · 本地 MySQL'}">页脚</span>
+        <a href="/about">阅读说明</a>
+    </div>
+</footer>
+</body>
+</html>

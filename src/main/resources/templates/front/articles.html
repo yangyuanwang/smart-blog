@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/front :: head('博客')}"></head>
+<body>
+<header th:replace="~{fragments/front :: nav('articles')}"></header>
+<main class="sheet">
+    <header class="list-head">
+        <div>
+            <h1>文章</h1>
+            <p class="filter-note" th:if="${q != null and !#strings.isEmpty(q)}" th:text="'正在搜索「' + ${q} + '」'">搜索</p>
+            <p class="filter-note" th:if="${tag != null and !#strings.isEmpty(tag)}" th:text="'标签 · ' + ${tag}">标签</p>
+        </div>
+        <form class="find" action="/articles" method="get">
+            <input type="hidden" name="cid" th:if="${cid != null}" th:value="${cid}">
+            <input type="text" name="q" placeholder="搜索标题或正文" th:value="${q}">
+            <button type="submit">搜索</button>
+        </form>
+    </header>
+    <div class="layout">
+        <div class="stream">
+            <article class="entry" th:each="a : ${pager.records}" th:classappend="${@fmt.logoOk(a.logo)} ? 'has-cover'">
+                <div>
+                    <p class="entry-kicker">
+                        <span th:text="${a.categoryName}">栏目</span>
+                        <span th:text="${a.createTime == null ? '' : (a.createTime.length() >= 10 ? #strings.substring(a.createTime,0,10) : a.createTime)}">日期</span>
+                        <span th:if="${a.isHot == 1}">热门</span>
+                        <span th:text="${a.readingMinutes + ' 分钟'}">1 分钟</span>
+                        <span th:if="${site['show_visit'] != '0'}" th:text="${(a.visitCount ?: 0) + ' 次阅读'}">阅读</span>
+                    </p>
+                    <h2><a th:href="@{/article/{id}(id=${a.aid})}" th:text="${a.title}">标题</a></h2>
+                    <p class="excerpt" th:if="${a.digest != null and !#strings.isEmpty(a.digest)}"
+                       th:text="${#strings.abbreviate(a.digest, 140)}">摘要</p>
+                    <p class="entry-more" th:if="${!@fmt.tags(a.tagNames).isEmpty()}">
+                        <a th:each="tagName : ${@fmt.tags(a.tagNames)}" th:href="@{/articles(tag=${tagName})}" th:text="${tagName}">标签</a>
+                    </p>
+                </div>
+                <img th:if="${@fmt.logoOk(a.logo)}" th:src="${a.logo}" alt="">
+            </article>
+            <p class="empty" th:if="${pager.records.isEmpty()}">没有找到文章。</p>
+            <nav class="pager" th:if="${pager.pages > 1}">
+                <a th:if="${pager.current > 1}" th:href="@{/articles(page=${pager.current - 1}, cid=${cid}, q=${q}, tag=${tag})}">上一页</a>
+                <span th:text="${pager.current + ' / ' + pager.pages}">1 / 1</span>
+                <a th:if="${pager.current < pager.pages}" th:href="@{/articles(page=${pager.current + 1}, cid=${cid}, q=${q}, tag=${tag})}">下一页</a>
+            </nav>
+        </div>
+        <aside class="rail">
+            <h2>栏目</h2>
+            <a href="/articles" th:classappend="${cid == null and (tag == null or #strings.isEmpty(tag))} ? 'on'">
+                <span>全部</span>
+            </a>
+            <a th:each="category : ${categories}" th:href="@{/articles(cid=${category.cid})}"
+               th:classappend="${cid == category.cid} ? 'on'">
+                <span th:text="${category.cname}">栏目</span>
+                <span th:text="${category.articleCount}">0</span>
+            </a>
+            <h2>标签</h2>
+            <div class="tag-line">
+                <a th:each="item : ${tags}" th:href="@{/articles(tag=${item.tname})}"
+                   th:classappend="${tag == item.tname} ? 'on'" th:text="${item.tname}">标签</a>
+            </div>
+            <h2>热门</h2>
+            <div class="hot-list">
+                <a th:each="a : ${hot}" th:href="@{/article/{id}(id=${a.aid})}" th:text="${a.title}">标题</a>
+            </div>
+        </aside>
+    </div>
+</main>
+<footer th:replace="~{fragments/front :: foot}"></footer>
+</body>
+</html>

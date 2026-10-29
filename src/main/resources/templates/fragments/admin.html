@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(pageTitle)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle + ' · 后台'}">后台</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css(v=5)}">
+</head>
+<body>
+<aside th:fragment="side(active)" class="side">
+    <a class="brand" href="/admin">智能博客</a>
+    <a href="/admin" th:classappend="${active == 'dash'} ? 'on'"><i class="nav-ico"></i>总览</a>
+    <a href="/admin/articles" th:classappend="${active == 'article'} ? 'on'"><i class="nav-ico"></i>文章</a>
+    <a href="/admin/notices" th:classappend="${active == 'notice'} ? 'on'"><i class="nav-ico"></i>公告</a>
+    <a href="/admin/comments" th:classappend="${active == 'comment'} ? 'on'"><i class="nav-ico"></i>评论</a>
+    <a href="/admin/messages" th:classappend="${active == 'message'} ? 'on'"><i class="nav-ico"></i>留言<i class="dot" th:if="${pendingMessages > 0}"></i></a>
+    <a href="/admin/diaries" th:classappend="${active == 'diary'} ? 'on'"><i class="nav-ico"></i>日记</a>
+    <a href="/admin/categories" th:classappend="${active == 'category'} ? 'on'"><i class="nav-ico"></i>栏目</a>
+    <a href="/admin/links" th:classappend="${active == 'link'} ? 'on'"><i class="nav-ico"></i>友链</a>
+    <a href="/admin/users" th:classappend="${active == 'user'} ? 'on'"><i class="nav-ico"></i>用户</a>
+    <a href="/admin/logs" th:classappend="${active == 'log'} ? 'on'"><i class="nav-ico"></i>登录日志</a>
+    <a href="/admin/settings" th:classappend="${active == 'setting'} ? 'on'"><i class="nav-ico"></i>设置</a>
+    <a href="/admin/profile" th:classappend="${active == 'profile'} ? 'on'"><i class="nav-ico"></i>个人信息</a>
+</aside>
+<div th:fragment="top" class="topbar">
+    <div class="who-line">
+        <span class="who" th:text="${loginUser != null ? (loginUser.nickname != null ? loginUser.nickname : loginUser.username) : ''}">admin</span>
+        <span class="count" th:if="${loginUser != null}" th:text="${'第 ' + (loginUser.loginCount != null ? loginUser.loginCount : 0) + ' 次登录'}">次数</span>
+    </div>
+    <div class="tools">
+        <a class="btn line" href="/">前台</a>
+        <form th:action="@{/logout}" method="post">
+            <input type="hidden" name="next" value="/admin/login">
+            <button class="line" type="submit">退出</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

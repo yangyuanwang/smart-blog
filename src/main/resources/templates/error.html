@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>出了点问题</title>
+    <link rel="stylesheet" th:href="@{/css/site.css(v=3)}">
+</head>
+<body>
+<main class="auth">
+    <p class="kicker">BLOG</p>
+    <h1>这一页没有打开</h1>
+    <p th:text="${message != null ? message : '页面不存在，或服务器暂时处理不了这个请求。'}">错误</p>
+    <p><a class="btn" href="/">回首页</a></p>
+</main>
+</body>
+</html>

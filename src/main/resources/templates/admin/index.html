@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/admin :: head('总览')}"></head>
+<body>
+<div class="shell">
+    <aside th:replace="~{fragments/admin :: side('dash')}"></aside>
+    <main class="main">
+        <div th:replace="~{fragments/admin :: top}"></div>
+        <h1>信息总览</h1>
+        <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+        <section class="stats">
+            <div class="stat"><b th:text="${articleCount}">0</b><span>文章</span></div>
+            <div class="stat"><b th:text="${commentCount}">0</b><span>评论</span></div>
+            <div class="stat"><b th:text="${linkCount}">0</b><span>友链</span></div>
+            <div class="stat"><b th:text="${visitCount}">0</b><span>访问量</span></div>
+        </section>
+        <section class="panel brief">
+            <p><b>公开内容</b><span th:text="${'公开文章 ' + publicCount + ' 篇，留言 ' + messageCount + ' 条。'}">内容</span></p>
+            <p th:if="${loginUser != null}"><b>上次登录</b><span th:text="${loginUser.lastLoginTime != null ? loginUser.lastLoginTime : '这是第一次'}">时间</span></p>
+            <p th:if="${loginUser != null}"><b>登录 IP</b><span th:text="${loginUser.loginIp != null ? loginUser.loginIp : '-'}">ip</span></p>
+            <p class="env" th:text="|Java ${javaVersion} · ${osName} · MySQL blog|">系统</p>
+        </section>
+    </main>
+</div>
+</body>
+</html>

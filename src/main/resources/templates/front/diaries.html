@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/front :: head('日记')}"></head>
+<body>
+<header th:replace="~{fragments/front :: nav('diaries')}"></header>
+<main class="wrap section">
+    <h1 class="page-title">日记</h1>
+    <div class="timeline">
+        <article th:each="item : ${diaries}">
+            <div class="muted" th:text="${item.createTime + (item.mood == null or item.mood.isEmpty() ? '' : ' · ' + item.mood)}">时间</div>
+            <h2 th:text="${item.title}">标题</h2>
+            <p th:text="${item.content}">内容</p>
+        </article>
+        <p class="muted" th:if="${diaries.isEmpty()}">还没有日记。</p>
+    </div>
+</main>
+<footer th:replace="~{fragments/front :: foot}"></footer>
+</body>
+</html>

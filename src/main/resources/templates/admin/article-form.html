@@ -59,7 +59,10 @@
     function filterTags() {
         var value = cid.value;
         document.querySelectorAll(".tag-item").forEach(function (el) {
-            el.style.display = value && el.getAttribute("data-cid") === value ? "" : "none";
+            var match = value && el.getAttribute("data-cid") === value;
+            el.style.display = match ? "" : "none";
+            var input = el.querySelector("input");
+            if (input) input.disabled = !match;
         });
     }
     cid.addEventListener("change", filterTags);

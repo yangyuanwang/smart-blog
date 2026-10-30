@@ -1,70 +1,246 @@
 <!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/admin :: head('栏目')}"></head>
+<head th:replace="~{fragments/admin :: head('栏目与标签')}"></head>
 <body>
 <div class="shell">
     <aside th:replace="~{fragments/admin :: side('category')}"></aside>
     <div class="workspace">
-        <header th:replace="~{fragments/admin :: top('栏目')}"></header>
+        <header th:replace="~{fragments/admin :: top('栏目与标签')}"></header>
         <main class="main">
             <div class="page-head">
                 <div>
                     <h1>栏目与标签</h1>
-                    <p class="page-desc">维护文章栏目，以及栏目下的标签。栏目里还有文章时不能删除。</p>
+                    <p class="page-desc">整理文章分类，让知识更容易被发现。</p>
                 </div>
             </div>
             <p class="flash" th:if="${msg}" th:text="${msg}"></p>
-            <div class="grid-2">
-                <form class="panel" action="/admin/categories" method="post">
-                    <h2>新增栏目</h2>
-                    <label>栏目名称<input type="text" name="cname" placeholder="1 到 30 个字符" required></label>
-                    <button type="submit">添加栏目</button>
-                </form>
-                <form class="panel" action="/admin/tags" method="post">
-                    <h2>新增标签</h2>
-                    <label>所属栏目
-                        <select name="cid" required>
-                            <option th:each="category : ${categories}" th:value="${category.cid}" th:text="${category.cname}"></option>
-                        </select>
-                    </label>
-                    <label>标签名称<input type="text" name="tname" placeholder="1 到 30 个字符" required></label>
-                    <button type="submit">添加标签</button>
-                </form>
+
+            <div class="split">
+                <section class="panel split-card">
+                    <div class="list-bar">
+                        <h2>文章栏目</h2>
+                        <button class="btn sm" id="open-category" type="button">新建栏目</button>
+                    </div>
+                    <p class="pane-empty" th:if="${categories.isEmpty()}">还没有栏目。先新建一个，再为它添加标签。</p>
+                    <div class="cat-list" th:unless="${categories.isEmpty()}">
+                        <div class="cat-row" th:each="category : ${categories}">
+                            <button class="cat-item" type="button"
+                                    th:classappend="${category.cid == categories[0].cid} ? 'on' : ''"
+                                    th:attr="data-cid=${category.cid},data-name=${category.cname}">
+                                <span class="cat-name" th:text="${category.cname}">栏目</span>
+                                <span class="cat-meta" th:text="${(tagCounts.get(category.cid) != null ? tagCounts.get(category.cid) : 0) + ' 个标签'}">0 个标签</span>
+                            </button>
+                            <form th:action="@{/admin/categories/delete}" method="post"
+                                  th:attr="data-articles=${category.articleCount != null ? category.articleCount : 0}"
+                                  onsubmit="return window.guardCategory(this)">
+                                <input type="hidden" name="cid" th:value="${category.cid}">
+                                <button class="linkish danger" type="submit">删除</button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel split-card">
+                    <div th:if="${categories.isEmpty()}" class="pane-empty">请先选择或新建栏目。</div>
+                    <div th:unless="${categories.isEmpty()}" id="tag-pane">
+                        <div class="list-bar">
+                            <div class="title-row">
+                                <h2 id="tag-title" th:text="${categories[0].cname + '标签'}">标签</h2>
+                                <span class="count-note" id="tag-count" th:text="${(tagCounts.get(categories[0].cid) != null ? tagCounts.get(categories[0].cid) : 0) + ' 个'}">0 个</span>
+                            </div>
+                            <button class="btn sm" id="open-tag" type="button">新增标签</button>
+                        </div>
+                        <label class="tag-find">
+                            <span class="sr">搜索当前栏目的标签</span>
+                            <input id="tag-search" type="search" placeholder="搜索当前栏目的标签">
+                        </label>
+                        <table class="tag-table" id="tag-list">
+                                <thead>
+                                <tr>
+                                    <th>标签名称</th>
+                                    <th>关联文章数</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr class="tag-line" th:each="item : ${tags}"
+                                    th:hidden="${item.cid != categories[0].cid}"
+                                    th:attr="data-cid=${item.cid},data-name=${item.tname}">
+                                    <td><span class="badge" th:text="${item.tname}">标签</span></td>
+                                    <td class="tag-num" th:text="${tagArticleCounts.get(item.tid) != null ? tagArticleCounts.get(item.tid) : 0}">0</td>
+                                    <td>
+                                        <form th:action="@{/admin/tags/delete}" method="post"
+                                              onsubmit="return confirm('删除标签不会删除文章中已保存的标签文字，确定继续吗？')">
+                                            <input type="hidden" name="tid" th:value="${item.tid}">
+                                            <button class="linkish danger" type="submit">删除</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                </tbody>
+                        </table>
+                        <div class="pane-empty" id="tag-blank" hidden>
+                            <p>这个栏目还没有标签</p>
+                            <button class="btn sm" id="open-tag-first" type="button">添加第一个标签</button>
+                        </div>
+                        <p class="pane-empty" id="tag-none" hidden>没有匹配的标签。</p>
+                    </div>
+                </section>
             </div>
-            <section class="section">
-                <h2>现有栏目</h2>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>栏目</th><th class="num">文章</th><th>标签</th><th>操作</th></tr></thead>
-                        <tbody>
-                        <tr th:if="${categories.isEmpty()}">
-                            <td class="empty" colspan="4">还没有栏目。</td>
-                        </tr>
-                        <tr th:each="category : ${categories}">
-                            <td th:text="${category.cname}">栏目</td>
-                            <td class="num" th:text="${category.articleCount != null ? category.articleCount : 0}">0</td>
-                            <td>
-                                <div th:each="item : ${tags}" th:if="${item.cid == category.cid}" class="tag-row">
-                                    <span class="badge" th:text="${item.tname}">标签</span>
-                                    <form th:action="@{/admin/tags/delete}" method="post" onsubmit="return confirm('确定删除这个标签？')">
-                                        <input type="hidden" name="tid" th:value="${item.tid}">
-                                        <button class="danger" type="submit">删除</button>
-                                    </form>
-                                </div>
-                            </td>
-                            <td>
-                                <form th:action="@{/admin/categories/delete}" method="post" onsubmit="return confirm('删除栏目会同时删除它的标签')">
-                                    <input type="hidden" name="cid" th:value="${category.cid}">
-                                    <button class="danger" type="submit">删除栏目</button>
-                                </form>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
         </main>
     </div>
 </div>
+
+<dialog class="modal" id="dlg-category">
+    <form action="/admin/categories" method="post">
+        <h2>新建栏目</h2>
+        <label>栏目名称<input type="text" name="cname" maxlength="30" placeholder="1 到 30 个字符" required></label>
+        <div class="tools">
+            <button type="submit">保存</button>
+            <button class="line" type="button" data-close>取消</button>
+        </div>
+    </form>
+</dialog>
+<dialog class="modal" id="dlg-tag">
+    <form action="/admin/tags" method="post">
+        <h2>新增标签</h2>
+        <p class="muted">所属栏目 <strong id="dlg-cat-name">栏目</strong></p>
+        <input type="hidden" name="cid" id="dlg-cid">
+        <label>标签名称<input type="text" name="tname" maxlength="30" placeholder="1 到 30 个字符" required></label>
+        <div class="tools">
+            <button type="submit">保存</button>
+            <button class="line" type="button" data-close>取消</button>
+        </div>
+    </form>
+</dialog>
+<script>
+    (function () {
+        var key = "admin-category-cid";
+        var items = Array.prototype.slice.call(document.querySelectorAll(".cat-item"));
+        var lines = Array.prototype.slice.call(document.querySelectorAll(".tag-line"));
+        var search = document.getElementById("tag-search");
+        var current = "";
+
+        window.guardCategory = function (form) {
+            if (Number(form.getAttribute("data-articles")) > 0) {
+                alert("栏目下还有文章，不能删除");
+                return false;
+            }
+            return confirm("删除栏目会同时删除它的标签");
+        };
+
+        function counts() {
+            var map = {};
+            lines.forEach(function (line) {
+                var id = line.getAttribute("data-cid");
+                map[id] = (map[id] || 0) + 1;
+            });
+            items.forEach(function (item) {
+                var n = map[item.getAttribute("data-cid")] || 0;
+                item.querySelector(".cat-meta").textContent = n + " 个标签";
+            });
+        }
+
+        function selectedItem() {
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].getAttribute("data-cid") === current) return items[i];
+            }
+            return null;
+        }
+
+        function render() {
+            var item = selectedItem();
+            var name = item ? item.getAttribute("data-name") : "";
+            var query = search ? search.value.replace(/^\s+|\s+$/g, "").toLowerCase() : "";
+            var total = 0;
+            var shown = 0;
+            items.forEach(function (btn) {
+                var on = btn.getAttribute("data-cid") === current;
+                btn.classList.toggle("on", on);
+                if (on) btn.setAttribute("aria-current", "true");
+                else btn.removeAttribute("aria-current");
+            });
+            lines.forEach(function (line) {
+                var mine = line.getAttribute("data-cid") === current;
+                var text = (line.getAttribute("data-name") || "").toLowerCase();
+                var hit = !query || text.indexOf(query) >= 0;
+                var visible = mine && hit;
+                line.hidden = !visible;
+                if (mine) total += 1;
+                if (visible) shown += 1;
+            });
+            var title = document.getElementById("tag-title");
+            var note = document.getElementById("tag-count");
+            var blank = document.getElementById("tag-blank");
+            var none = document.getElementById("tag-none");
+            var list = document.getElementById("tag-list");
+            if (title) title.textContent = name ? name + "标签" : "标签";
+            if (note) note.textContent = total + " 个";
+            if (blank) blank.hidden = total !== 0;
+            if (none) none.hidden = total === 0 || shown !== 0;
+            if (list) list.hidden = total === 0;
+        }
+
+        function select(cid) {
+            current = String(cid);
+            try { localStorage.setItem(key, current); } catch (e) {}
+            if (search) search.value = "";
+            render();
+        }
+
+        function openDialog(dialog) {
+            if (dialog.showModal) dialog.showModal();
+            else dialog.setAttribute("open", "open");
+            var field = dialog.querySelector("input[type='text']");
+            if (field) {
+                field.value = "";
+                field.focus();
+            }
+        }
+
+        function openTag() {
+            if (!current) {
+                alert("请先选择栏目");
+                return;
+            }
+            var item = selectedItem();
+            document.getElementById("dlg-cid").value = current;
+            document.getElementById("dlg-cat-name").textContent = item ? item.getAttribute("data-name") : "";
+            openDialog(document.getElementById("dlg-tag"));
+        }
+
+        counts();
+        if (items.length) {
+            var saved = "";
+            try { saved = localStorage.getItem(key) || ""; } catch (e) {}
+            var known = items.some(function (item) { return item.getAttribute("data-cid") === saved; });
+            select(known ? saved : items[0].getAttribute("data-cid"));
+        }
+
+        items.forEach(function (item) {
+            item.addEventListener("click", function () { select(item.getAttribute("data-cid")); });
+        });
+        if (search) search.addEventListener("input", render);
+        document.getElementById("open-category").addEventListener("click", function () {
+            openDialog(document.getElementById("dlg-category"));
+        });
+        var openTagBtn = document.getElementById("open-tag");
+        var firstBtn = document.getElementById("open-tag-first");
+        if (openTagBtn) openTagBtn.addEventListener("click", openTag);
+        if (firstBtn) firstBtn.addEventListener("click", openTag);
+        Array.prototype.forEach.call(document.querySelectorAll("[data-close]"), function (btn) {
+            btn.addEventListener("click", function () {
+                var dialog = btn.closest("dialog");
+                if (dialog && dialog.close) dialog.close();
+                else if (dialog) dialog.removeAttribute("open");
+            });
+        });
+        Array.prototype.forEach.call(document.querySelectorAll("dialog.modal"), function (dialog) {
+            dialog.addEventListener("click", function (event) {
+                if (event.target === dialog && dialog.close) dialog.close();
+            });
+        });
+
+    })();
+</script>
 </body>
 </html>

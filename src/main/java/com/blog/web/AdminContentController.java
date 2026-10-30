@@ -4,6 +4,7 @@ import com.blog.common.BizException;
 import com.blog.entity.Diary;
 import com.blog.entity.Link;
 import com.blog.entity.Notice;
+import com.blog.entity.Tag;
 import com.blog.service.ContentService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,6 +13,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/admin")
@@ -25,8 +30,19 @@ public class AdminContentController {
 
     @GetMapping("/categories")
     public String categories(Model model) {
+        List<Tag> tags = contentService.tags();
+        Map<Integer, Integer> tagCounts = new LinkedHashMap<Integer, Integer>();
+        for (Tag tag : tags) {
+            if (tag.getCid() == null) {
+                continue;
+            }
+            Integer count = tagCounts.get(tag.getCid());
+            tagCounts.put(tag.getCid(), count == null ? 1 : count + 1);
+        }
         model.addAttribute("categories", contentService.categories());
-        model.addAttribute("tags", contentService.tags());
+        model.addAttribute("tags", tags);
+        model.addAttribute("tagCounts", tagCounts);
+        model.addAttribute("tagArticleCounts", contentService.countArticlesByTag(tags));
         return "admin/categories";
     }
 

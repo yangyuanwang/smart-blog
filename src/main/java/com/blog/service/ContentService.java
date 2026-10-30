@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.blog.common.BizException;
+import com.blog.common.Fmt;
 import com.blog.common.MessageText;
 import com.blog.common.Texts;
 import com.blog.entity.Article;
@@ -44,10 +45,11 @@ public class ContentService {
     private final NoticeMapper noticeMapper;
     private final ArticleMapper articleMapper;
     private final ArticleService articleService;
+    private final Fmt fmt;
 
     public ContentService(CategoryMapper categoryMapper, TagMapper tagMapper, LinkMapper linkMapper,
                           CommentMapper commentMapper, MessageMapper messageMapper, DiaryMapper diaryMapper,
-                          NoticeMapper noticeMapper, ArticleMapper articleMapper, ArticleService articleService) {
+                          NoticeMapper noticeMapper, ArticleMapper articleMapper, ArticleService articleService, Fmt fmt) {
         this.categoryMapper = categoryMapper;
         this.tagMapper = tagMapper;
         this.linkMapper = linkMapper;
@@ -57,6 +59,7 @@ public class ContentService {
         this.noticeMapper = noticeMapper;
         this.articleMapper = articleMapper;
         this.articleService = articleService;
+        this.fmt = fmt;
     }
 
     public List<Category> categories() {
@@ -71,6 +74,42 @@ public class ContentService {
 
     public List<Tag> tags() {
         return tagMapper.selectList(new QueryWrapper<Tag>().orderByAsc("cid").orderByAsc("tid"));
+    }
+
+    public Map<Integer, Integer> countArticlesByTag(List<Tag> tags) {
+        Map<Integer, Integer> counts = new LinkedHashMap<Integer, Integer>();
+        Map<String, List<Integer>> index = new LinkedHashMap<String, List<Integer>>();
+        if (tags != null) {
+            for (Tag tag : tags) {
+                if (tag.getTid() == null) {
+                    continue;
+                }
+                counts.put(tag.getTid(), 0);
+                if (Texts.blank(tag.getTname())) {
+                    continue;
+                }
+                String key = tag.getTname().trim();
+                List<Integer> ids = index.get(key);
+                if (ids == null) {
+                    ids = new ArrayList<Integer>();
+                    index.put(key, ids);
+                }
+                ids.add(tag.getTid());
+            }
+        }
+        List<Article> articles = articleMapper.selectList(new QueryWrapper<Article>());
+        for (Article article : articles) {
+            for (String name : fmt.tags(article.getTagNames())) {
+                List<Integer> ids = index.get(name);
+                if (ids == null) {
+                    continue;
+                }
+                for (Integer id : ids) {
+                    counts.put(id, counts.get(id) + 1);
+                }
+            }
+        }
+        return counts;
     }
 
     public void saveCategory(String name) {

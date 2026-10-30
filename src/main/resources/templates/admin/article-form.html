@@ -38,10 +38,17 @@
                 <label>摘要<textarea name="digest" placeholder="留空时按正文自动生成" th:text="${article.digest}"></textarea></label>
                 <label>正文<textarea class="editor" name="content" required th:text="${article.content}"></textarea></label>
                 <div class="check">
-                    <label><input type="radio" name="isOpen" value="1" th:checked="${article.isOpen != '0'}"> 公开</label>
-                    <label><input type="radio" name="isOpen" value="0" th:checked="${article.isOpen == '0'}"> 私密</label>
+                    <label><input type="radio" name="publishStatus" value="0" required th:checked="${article.publishStatus == '0'}"> 存草稿</label>
+                    <label><input type="radio" name="publishStatus" value="1" required th:checked="${article.publishStatus == '1'}"> 已发布</label>
+                    <label><input type="radio" name="publishStatus" value="2" required th:checked="${article.publishStatus == '2'}"> 已下线</label>
                     <label><input type="checkbox" name="isHot" value="1" th:checked="${article.isHot == 1}"> 热门</label>
+                    <label><input type="checkbox" name="isTop" value="1" th:checked="${article.isTop == 1}"> 置顶</label>
                 </div>
+                <p class="muted">新建文章默认是草稿，访客看不到。要公开请改选「已发布」再保存。热门和置顶互不影响。草稿也要填写标题和正文。</p>
+                <label>SEO 标题<input type="text" name="seoTitle" maxlength="255" th:value="${article.seoTitle}" placeholder="留空则使用文章标题"></label>
+                <label>SEO 关键词<input type="text" name="seoKeywords" maxlength="255" th:value="${article.seoKeywords}" placeholder="留空则不输出关键词标签"></label>
+                <label>SEO 描述<textarea name="seoDesc" maxlength="500" th:text="${article.seoDesc}" placeholder="留空则不输出描述标签"></textarea></label>
+                <p class="muted">这三项只影响文章详情页的浏览器标题和 meta。正文里的大标题始终用上面的文章标题。</p>
                 <label class="upload">封面
                     <input type="file" name="logoFile" accept="image/*">
                     <span th:if="${@fmt.logoOk(article.logo)}">当前封面：<span th:text="${article.logo}"></span></span>

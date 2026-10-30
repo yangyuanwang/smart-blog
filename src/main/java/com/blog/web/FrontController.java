@@ -80,8 +80,23 @@ public class FrontController {
     public String article(@PathVariable Integer id, HttpSession session, Model model) {
         User user = (User) session.getAttribute(UserService.LOGIN_USER);
         Article article = articleService.detail(id, UserService.isAdmin(user));
+        SmartService.Rendered rendered = smartService.renderWithToc(article.getContent());
+        String pageTitle = article.getTitle();
+        if (!Texts.blank(article.getSeoTitle())) {
+            pageTitle = article.getSeoTitle();
+        }
+        model.addAttribute("pageTitle", pageTitle == null ? "" : pageTitle);
         model.addAttribute("article", article);
-        model.addAttribute("html", smartService.render(article.getContent()));
+        model.addAttribute("html", rendered.getHtml());
+        model.addAttribute("toc", rendered.getToc());
+        if (!Texts.blank(article.getSeoKeywords())) {
+            model.addAttribute("seoKeywords", article.getSeoKeywords());
+        }
+        if (!Texts.blank(article.getSeoDesc())) {
+            model.addAttribute("seoDesc", article.getSeoDesc());
+        }
+        model.addAttribute("prev", articleService.previousPublished(article));
+        model.addAttribute("next", articleService.nextPublished(article));
         model.addAttribute("related", articleService.related(article, 4));
         model.addAttribute("comments", contentService.commentsOf(id));
         model.addAttribute("allowComment", settingService.enabled("allow_comment", true));

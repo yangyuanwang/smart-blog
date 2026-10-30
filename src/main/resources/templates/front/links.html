@@ -3,21 +3,25 @@
 <head th:replace="~{fragments/front :: head('友链')}"></head>
 <body>
 <header th:replace="~{fragments/front :: navbar('links')}"></header>
-<main class="wrap section">
-    <h1 class="page-title">友链</h1>
-    <div class="link-grid">
-        <a class="panel link-card" th:each="link : ${links}" th:href="${link.siteUrl}" target="_blank" rel="noopener noreferrer">
+<main class="sheet">
+    <header class="list-head">
+        <div>
+            <h1>友链</h1>
+        </div>
+    </header>
+    <div class="stream">
+        <a class="link-row link-card" th:each="link : ${links}" th:href="${link.siteUrl}" target="_blank" rel="noopener noreferrer">
             <span class="link-mark">
                 <img alt="" hidden>
                 <span th:text="${link.siteName != null and !#strings.isEmpty(link.siteName) ? #strings.substring(link.siteName,0,1) : '链'}">链</span>
             </span>
             <span class="link-copy">
-                <h3 th:text="${link.siteName}">名称</h3>
-                <p th:text="${link.siteDesc}">描述</p>
-                <span class="muted" th:text="${link.siteUrl}">地址</span>
+                <h2 th:text="${link.siteName}">名称</h2>
+                <p class="plain" th:if="${link.siteDesc != null and !#strings.isEmpty(link.siteDesc)}" th:text="${link.siteDesc}">描述</p>
+                <p class="entry-kicker"><span th:text="${link.siteUrl}">地址</span></p>
             </span>
         </a>
-        <p class="muted" th:if="${links.isEmpty()}">还没有友链。</p>
+        <p class="empty" th:if="${links.isEmpty()}">还没有友链。</p>
     </div>
 </main>
 <footer th:replace="~{fragments/front :: foot}"></footer>

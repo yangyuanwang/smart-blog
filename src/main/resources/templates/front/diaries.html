@@ -3,15 +3,24 @@
 <head th:replace="~{fragments/front :: head('日记')}"></head>
 <body>
 <header th:replace="~{fragments/front :: navbar('diaries')}"></header>
-<main class="wrap section">
-    <h1 class="page-title">日记</h1>
-    <div class="timeline">
-        <article th:each="item : ${diaries}">
-            <div class="muted" th:text="${item.createTime + (item.mood == null or item.mood.isEmpty() ? '' : ' · ' + item.mood)}">时间</div>
-            <h2 th:text="${item.title}">标题</h2>
-            <p th:text="${item.content}">内容</p>
+<main class="sheet">
+    <header class="list-head">
+        <div>
+            <h1>日记</h1>
+        </div>
+    </header>
+    <div class="stream">
+        <article class="entry" th:each="item : ${diaries}">
+            <div>
+                <p class="entry-kicker">
+                    <span th:text="${item.createTime}">时间</span>
+                    <span th:if="${item.mood != null and !item.mood.isEmpty()}" th:text="${item.mood}">心情</span>
+                </p>
+                <h2 th:text="${item.title}">标题</h2>
+                <p class="plain" th:text="${item.content}">内容</p>
+            </div>
         </article>
-        <p class="muted" th:if="${diaries.isEmpty()}">还没有日记。</p>
+        <p class="empty" th:if="${diaries.isEmpty()}">还没有日记。</p>
     </div>
 </main>
 <footer th:replace="~{fragments/front :: foot}"></footer>

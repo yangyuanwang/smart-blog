@@ -4,8 +4,15 @@ import com.blog.common.Fmt;
 import com.blog.common.Texts;
 import org.commonmark.Extension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.node.Code;
+import org.commonmark.node.Heading;
+import org.commonmark.node.HtmlInline;
 import org.commonmark.node.Node;
+import org.commonmark.node.Text;
 import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.AttributeProvider;
+import org.commonmark.renderer.html.AttributeProviderContext;
+import org.commonmark.renderer.html.AttributeProviderFactory;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +22,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,20 +40,94 @@ public class SmartService {
     ));
 
     private final Parser parser;
-    private final HtmlRenderer renderer;
+    private final List<Extension> extensions;
     private final Fmt fmt;
 
     public SmartService(Fmt fmt) {
         this.fmt = fmt;
-        List<Extension> extensions = Collections.singletonList(TablesExtension.create());
+        this.extensions = Collections.singletonList(TablesExtension.create());
         this.parser = Parser.builder().extensions(extensions).build();
-        this.renderer = HtmlRenderer.builder().extensions(extensions).escapeHtml(true).sanitizeUrls(true).build();
     }
 
     public String render(String markdown) {
+        return renderWithToc(markdown).getHtml();
+    }
+
+    public Rendered renderWithToc(String markdown) {
         String source = markdown == null ? "" : markdown;
         Node document = parser.parse(source);
-        return renderer.render(document);
+        final Map<Heading, String> ids = new IdentityHashMap<Heading, String>();
+        List<TocItem> toc = new ArrayList<TocItem>();
+        collectHeadings(document, ids, toc);
+        String html = renderer(ids).render(document);
+        return new Rendered(html, toc);
+    }
+
+    private void collectHeadings(Node node, Map<Heading, String> ids, List<TocItem> toc) {
+        Node child = node.getFirstChild();
+        while (child != null) {
+            if (child instanceof Heading) {
+                Heading heading = (Heading) child;
+                String id = "toc-" + (toc.size() + 1);
+                ids.put(heading, id);
+                int level = heading.getLevel();
+                if (level < 1) {
+                    level = 1;
+                } else if (level > 6) {
+                    level = 6;
+                }
+                String text = headingText(heading);
+                toc.add(new TocItem(level, id, text.isEmpty() ? "（无标题）" : text));
+            }
+            collectHeadings(child, ids, toc);
+            child = child.getNext();
+        }
+    }
+
+    private String headingText(Node node) {
+        StringBuilder builder = new StringBuilder();
+        appendText(node, builder);
+        return builder.toString().trim();
+    }
+
+    private void appendText(Node node, StringBuilder builder) {
+        Node child = node.getFirstChild();
+        while (child != null) {
+            if (child instanceof Text) {
+                builder.append(((Text) child).getLiteral());
+            } else if (child instanceof Code) {
+                builder.append(((Code) child).getLiteral());
+            } else if (child instanceof HtmlInline) {
+                builder.append(((HtmlInline) child).getLiteral());
+            } else {
+                appendText(child, builder);
+            }
+            child = child.getNext();
+        }
+    }
+
+    private HtmlRenderer renderer(final Map<Heading, String> ids) {
+        return HtmlRenderer.builder()
+                .extensions(extensions)
+                .escapeHtml(true)
+                .sanitizeUrls(true)
+                .attributeProviderFactory(new AttributeProviderFactory() {
+                    @Override
+                    public AttributeProvider create(AttributeProviderContext context) {
+                        return new AttributeProvider() {
+                            @Override
+                            public void setAttributes(Node node, String tagName, Map<String, String> attributes) {
+                                if (node instanceof Heading) {
+                                    String id = ids.get(node);
+                                    if (id != null) {
+                                        attributes.put("id", id);
+                                    }
+                                }
+                            }
+                        };
+                    }
+                })
+                .build();
     }
 
     public String digest(String content) {
@@ -160,6 +242,48 @@ public class SmartService {
 
     private boolean isHan(char ch) {
         return ch >= 0x4E00 && ch <= 0x9FFF;
+    }
+
+    public static final class TocItem {
+        private final int level;
+        private final String id;
+        private final String text;
+
+        public TocItem(int level, String id, String text) {
+            this.level = level;
+            this.id = id;
+            this.text = text;
+        }
+
+        public int getLevel() {
+            return level;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public String getText() {
+            return text;
+        }
+    }
+
+    public static final class Rendered {
+        private final String html;
+        private final List<TocItem> toc;
+
+        public Rendered(String html, List<TocItem> toc) {
+            this.html = html;
+            this.toc = toc;
+        }
+
+        public String getHtml() {
+            return html;
+        }
+
+        public List<TocItem> getToc() {
+            return toc;
+        }
     }
 
     private String plain(String content) {

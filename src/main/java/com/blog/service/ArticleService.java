@@ -52,10 +52,13 @@ public class ArticleService {
         return result;
     }
 
-    public Page<Article> pageAdmin(long page, long size, String title) {
+    public Page<Article> pageAdmin(long page, long size, String title, String publishStatus) {
         QueryWrapper<Article> wrapper = new QueryWrapper<Article>().orderByDesc("aid");
         if (!Texts.blank(title)) {
             wrapper.like("title", title.trim());
+        }
+        if (isStatus(publishStatus)) {
+            wrapper.eq("publish_status", publishStatus);
         }
         Page<Article> result = articleMapper.selectPage(new Page<Article>(page, size), wrapper);
         fill(result.getRecords());
@@ -63,12 +66,9 @@ public class ArticleService {
     }
 
     public List<Article> latest(int limit) {
-        List<Article> list = articleMapper.selectList(new QueryWrapper<Article>()
-                .eq("isOpen", "1")
-                .orderByDesc("is_hot")
-                .orderByDesc("create_time")
-                .orderByDesc("aid")
-                .last("limit " + limit));
+        QueryWrapper<Article> wrapper = new QueryWrapper<Article>().eq("isOpen", "1");
+        orderPublic(wrapper);
+        List<Article> list = articleMapper.selectList(wrapper.last("limit " + limit));
         fill(list);
         return list;
     }
@@ -76,6 +76,7 @@ public class ArticleService {
     public List<Article> hot(int limit) {
         List<Article> list = articleMapper.selectList(new QueryWrapper<Article>()
                 .eq("isOpen", "1")
+                .orderByDesc("is_top")
                 .orderByDesc("visit_count")
                 .orderByDesc("aid")
                 .last("limit " + limit));
@@ -158,8 +159,12 @@ public class ArticleService {
         article.setContent(form.getContent());
         article.setCid(form.getCid());
         article.setTagNames(Texts.cut(normalizeTags(form.getTagNames()), 255));
-        article.setIsOpen("0".equals(form.getIsOpen()) ? "0" : "1");
+        applyStatus(article, form.getPublishStatus());
         article.setIsHot(form.getIsHot() != null && form.getIsHot() == 1 ? 1 : 0);
+        article.setIsTop(form.getIsTop() != null && form.getIsTop() == 1 ? 1 : 0);
+        article.setSeoTitle(Texts.cut(form.getSeoTitle(), 255));
+        article.setSeoKeywords(Texts.cut(form.getSeoKeywords(), 255));
+        article.setSeoDesc(Texts.cut(form.getSeoDesc(), 500));
         if (!Texts.blank(logo)) {
             article.setLogo(logo);
         }
@@ -188,10 +193,52 @@ public class ArticleService {
         }
     }
 
-    public void updateOpen(Integer id, String isOpen) {
-        articleMapper.update(null, new UpdateWrapper<Article>()
+    public void applyStatus(Article article, String publishStatus) {
+        if (article == null) {
+            throw new BizException("文章不存在");
+        }
+        if ("0".equals(publishStatus)) {
+            article.setPublishStatus("0");
+            article.setIsOpen("0");
+        } else if ("1".equals(publishStatus)) {
+            article.setPublishStatus("1");
+            article.setIsOpen("1");
+        } else if ("2".equals(publishStatus)) {
+            article.setPublishStatus("2");
+            article.setIsOpen("0");
+        } else {
+            throw new BizException("文章状态不正确");
+        }
+    }
+
+    public String changeStatus(Integer id, String publishStatus) {
+        if (!isStatus(publishStatus)) {
+            throw new BizException("文章状态不正确");
+        }
+        Article article = articleMapper.selectById(id);
+        if (article == null) {
+            throw new BizException("文章不存在");
+        }
+        if (publishStatus.equals(article.getPublishStatus())) {
+            throw new BizException("这篇文章已经是" + statusLabel(publishStatus));
+        }
+        applyStatus(article, publishStatus);
+        int rows = articleMapper.update(null, new UpdateWrapper<Article>()
                 .eq("aid", id)
-                .set("isOpen", "1".equals(isOpen) ? "1" : "0"));
+                .set("publish_status", article.getPublishStatus())
+                .set("isOpen", article.getIsOpen()));
+        if (rows == 0) {
+            throw new BizException("文章不存在");
+        }
+        return statusDone(publishStatus);
+    }
+
+    public Article previousPublished(Article current) {
+        return adjacent(current, false);
+    }
+
+    public Article nextPublished(Article current) {
+        return adjacent(current, true);
     }
 
     public void updateHot(Integer id, Integer isHot) {
@@ -256,8 +303,60 @@ public class ArticleService {
             String keyword = q.trim();
             wrapper.and(w -> w.like("title", keyword).or().like("digest", keyword).or().like("content", keyword));
         }
-        wrapper.orderByDesc("is_hot").orderByDesc("create_time").orderByDesc("aid");
+        orderPublic(wrapper);
         return wrapper;
+    }
+
+    private void orderPublic(QueryWrapper<Article> wrapper) {
+        wrapper.orderByDesc("is_top").orderByDesc("is_hot").orderByDesc("create_time").orderByDesc("aid");
+    }
+
+    private Article adjacent(Article current, boolean newer) {
+        if (current == null || current.getAid() == null) {
+            return null;
+        }
+        String time = current.getCreateTime() == null ? "" : current.getCreateTime();
+        QueryWrapper<Article> wrapper = new QueryWrapper<Article>()
+                .eq("isOpen", "1")
+                .eq("publish_status", "1")
+                .ne("aid", current.getAid());
+        if (newer) {
+            wrapper.and(w -> w.gt("create_time", time).or().eq("create_time", time).gt("aid", current.getAid()));
+            wrapper.orderByAsc("create_time").orderByAsc("aid");
+        } else {
+            wrapper.and(w -> w.lt("create_time", time).or().eq("create_time", time).lt("aid", current.getAid()));
+            wrapper.orderByDesc("create_time").orderByDesc("aid");
+        }
+        wrapper.last("limit 1");
+        List<Article> list = articleMapper.selectList(wrapper);
+        if (list.isEmpty()) {
+            return null;
+        }
+        return list.get(0);
+    }
+
+    private boolean isStatus(String publishStatus) {
+        return "0".equals(publishStatus) || "1".equals(publishStatus) || "2".equals(publishStatus);
+    }
+
+    private String statusLabel(String publishStatus) {
+        if ("0".equals(publishStatus)) {
+            return "草稿";
+        }
+        if ("1".equals(publishStatus)) {
+            return "已发布";
+        }
+        return "已下线";
+    }
+
+    private String statusDone(String publishStatus) {
+        if ("0".equals(publishStatus)) {
+            return "已存为草稿";
+        }
+        if ("1".equals(publishStatus)) {
+            return "文章已发布";
+        }
+        return "文章已下线";
     }
 
     private int score(Article article, Article current, Set<String> tags) {

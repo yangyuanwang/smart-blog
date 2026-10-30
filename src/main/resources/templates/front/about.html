@@ -3,9 +3,13 @@
 <head th:replace="~{fragments/front :: head('关于')}"></head>
 <body>
 <header th:replace="~{fragments/front :: navbar('about')}"></header>
-<main class="wrap section">
-    <h1 class="page-title">关于</h1>
-    <article class="panel prose" style="white-space:pre-wrap" th:text="${site['about']}">介绍</article>
+<main class="sheet">
+    <header class="list-head">
+        <div>
+            <h1>关于</h1>
+        </div>
+    </header>
+    <article class="about-copy" th:text="${site['about']}">介绍</article>
 </main>
 <footer th:replace="~{fragments/front :: foot}"></footer>
 </body>

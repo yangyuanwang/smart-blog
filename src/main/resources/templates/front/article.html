@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/front :: head(${article.title})}"></head>
+<head th:replace="~{fragments/front :: head(${pageTitle})}"></head>
 <body>
 <header th:replace="~{fragments/front :: navbar('articles')}"></header>
 <main class="read">
@@ -11,17 +11,29 @@
             <span th:text="${article.authorName}">作者</span>
         </p>
         <h1 th:text="${article.title}">标题</h1>
-        <p class="read-meta">
+        <p class="status-note" th:if="${article.isOpen != '1' and article.publishStatus == '0'}">当前是草稿。访客打开时仍会看到「这篇文章还没有公开」。</p>
+        <p class="status-note" th:if="${article.isOpen != '1' and article.publishStatus == '2'}">当前已下线。访客打开时仍会看到「这篇文章还没有公开」。</p>
+        <div class="read-meta">
             <span th:text="${article.createTime == null ? '' : (article.createTime.length() >= 10 ? #strings.substring(article.createTime,0,10) : article.createTime)}">日期</span>
             <span th:text="${'约 ' + article.readingMinutes + ' 分钟'}">1 分钟</span>
             <span th:if="${site['show_visit'] != '0'}" th:text="${(article.visitCount ?: 0) + ' 次阅读'}">阅读</span>
-        </p>
+            <button type="button" class="copy-link" id="copy-link">复制链接</button>
+        </div>
     </header>
     <img class="read-cover" th:if="${@fmt.logoOk(article.logo)}" th:src="${article.logo}" alt="">
-    <article class="prose" th:utext="${html}">正文</article>
+    <nav class="toc" th:if="${toc != null and !toc.isEmpty()}" aria-label="目录">
+        <p>目录</p>
+        <a th:each="item : ${toc}" th:href="${'#' + item.id}" th:text="${item.text}"
+           th:style="${'padding-left:' + ((item.level - 1) * 12) + 'px'}">标题</a>
+    </nav>
+    <article class="prose" id="article-body" th:utext="${html}">正文</article>
     <p class="keyword-line" th:if="${article.keywords != null and !article.keywords.isEmpty()}">
         <a th:each="word : ${article.keywords}" th:href="@{/articles(q=${word})}" th:text="${word}">词</a>
     </p>
+    <nav class="neighbors" th:if="${prev != null or next != null}" aria-label="相邻文章">
+        <a th:if="${prev != null}" th:href="@{/article/{id}(id=${prev.aid})}" th:text="${'上一篇 · ' + prev.title}">上一篇</a>
+        <a th:if="${next != null}" th:href="@{/article/{id}(id=${next.aid})}" th:text="${'下一篇 · ' + next.title}">下一篇</a>
+    </nav>
     <form class="like" th:action="@{/article/{id}/like(id=${article.aid})}" method="post">
         <button type="submit" th:text="${'觉得有用 · ' + (article.thumbsUp ?: 0)}">觉得有用</button>
     </form>
@@ -64,5 +76,114 @@
     </section>
 </main>
 <footer th:replace="~{fragments/front :: foot}"></footer>
+<div class="img-preview" id="img-preview" hidden>
+    <button type="button" class="img-preview-close" id="img-preview-close">关闭</button>
+    <img alt="">
+</div>
+<p class="toast" id="copy-toast" hidden></p>
+<script>
+    function showToast(text, bad) {
+        var toast = document.getElementById("copy-toast");
+        toast.textContent = text;
+        toast.className = bad ? "toast bad" : "toast";
+        toast.hidden = false;
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(function () {
+            toast.hidden = true;
+        }, 1800);
+    }
+    function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            return navigator.clipboard.writeText(text);
+        }
+        return new Promise(function (resolve, reject) {
+            var area = document.createElement("textarea");
+            area.value = text;
+            area.setAttribute("readonly", "");
+            area.style.position = "fixed";
+            area.style.left = "-9999px";
+            document.body.appendChild(area);
+            area.select();
+            var ok = false;
+            try {
+                ok = document.execCommand("copy");
+            } catch (err) {
+                ok = false;
+            }
+            document.body.removeChild(area);
+            if (ok) {
+                resolve();
+            } else {
+                reject(new Error("copy"));
+            }
+        });
+    }
+    function safeImageSrc(src) {
+        if (!src) {
+            return false;
+        }
+        var value = src.replace(/^\s+|\s+$/g, "");
+        if (!value || value.indexOf("\\") >= 0 || value.indexOf("//") === 0) {
+            return false;
+        }
+        var lower = value.toLowerCase();
+        if (lower.indexOf("http://") === 0 || lower.indexOf("https://") === 0) {
+            return true;
+        }
+        return value.indexOf(":") < 0;
+    }
+    document.getElementById("copy-link").addEventListener("click", function () {
+        copyText(window.location.href).then(function () {
+            showToast("链接已复制");
+        }).catch(function () {
+            showToast("复制失败，请手动复制地址", true);
+        });
+    });
+    document.querySelectorAll("#article-body pre").forEach(function (pre) {
+        var code = pre.querySelector("code");
+        if (!code) {
+            return;
+        }
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "code-copy";
+        button.textContent = "复制";
+        button.addEventListener("click", function () {
+            copyText(code.textContent).then(function () {
+                showToast("代码已复制");
+            }).catch(function () {
+                showToast("复制失败", true);
+            });
+        });
+        pre.insertBefore(button, pre.firstChild);
+    });
+    var preview = document.getElementById("img-preview");
+    var previewImage = preview.querySelector("img");
+    function closePreview() {
+        preview.hidden = true;
+        previewImage.removeAttribute("src");
+    }
+    document.querySelectorAll("#article-body img").forEach(function (image) {
+        image.addEventListener("click", function () {
+            var src = image.getAttribute("src");
+            if (!safeImageSrc(src)) {
+                return;
+            }
+            previewImage.setAttribute("src", src);
+            preview.hidden = false;
+        });
+    });
+    preview.addEventListener("click", function (event) {
+        if (event.target === preview) {
+            closePreview();
+        }
+    });
+    document.getElementById("img-preview-close").addEventListener("click", closePreview);
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !preview.hidden) {
+            closePreview();
+        }
+    });
+</script>
 </body>
 </html>

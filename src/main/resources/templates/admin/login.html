@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>后台登录</title>
-    <link rel="stylesheet" th:href="@{/css/admin.css(v=13)}">
+    <link rel="stylesheet" th:href="@{/css/admin.css(v=15)}">
 </head>
 <body>
 <main class="auth">
+    <p class="auth-brand">智序 · SMART WORKSPACE</p>
     <h1>后台登录</h1>
     <p class="muted">使用管理员账号进入智序工作台。</p>
     <p class="flash error" th:if="${error}" th:text="${error}"></p>

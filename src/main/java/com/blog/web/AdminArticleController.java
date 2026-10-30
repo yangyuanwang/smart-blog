@@ -1,6 +1,7 @@
 package com.blog.web;
 
 import com.blog.common.BizException;
+import com.blog.common.Texts;
 import com.blog.entity.Article;
 import com.blog.entity.User;
 import com.blog.service.ArticleService;
@@ -35,17 +36,22 @@ public class AdminArticleController {
     @GetMapping
     public String list(@RequestParam(defaultValue = "1") long page,
                        @RequestParam(required = false) String title,
+                       @RequestParam(required = false) String status,
                        Model model) {
-        model.addAttribute("pager", articleService.pageAdmin(page, 10, title));
+        String filter = articleStatus(status);
+        model.addAttribute("pager", articleService.pageAdmin(page, 10, title, filter));
         model.addAttribute("title", title);
+        model.addAttribute("status", filter);
         return "admin/articles";
     }
 
     @GetMapping("/edit")
     public String edit(@RequestParam(required = false) Integer id, Model model) {
         Article article = id == null ? new Article() : articleService.get(id);
-        if (article.getIsOpen() == null) {
-            article.setIsOpen("1");
+        if (id == null) {
+            article.setPublishStatus("0");
+        } else if (article.getPublishStatus() == null) {
+            article.setPublishStatus("1".equals(article.getIsOpen()) ? "1" : "2");
         }
         model.addAttribute("article", article);
         model.addAttribute("categories", contentService.categories());
@@ -81,23 +87,75 @@ public class AdminArticleController {
     }
 
     @PostMapping("/delete")
-    public String delete(@RequestParam Integer id, RedirectAttributes ra) {
+    public String delete(@RequestParam Integer id,
+                         @RequestParam(defaultValue = "1") long page,
+                         @RequestParam(required = false) String title,
+                         @RequestParam(required = false) String status,
+                         RedirectAttributes ra) {
         articleService.delete(id);
         ra.addFlashAttribute("msg", "文章已删除");
-        return "redirect:/admin/articles";
+        return back(ra, page, title, status);
+    }
+
+    @PostMapping("/status")
+    public String status(@RequestParam Integer id,
+                         @RequestParam String publishStatus,
+                         @RequestParam(defaultValue = "1") long page,
+                         @RequestParam(required = false) String title,
+                         @RequestParam(required = false) String status,
+                         RedirectAttributes ra) {
+        try {
+            ra.addFlashAttribute("msg", articleService.changeStatus(id, publishStatus));
+        } catch (BizException ex) {
+            ra.addFlashAttribute("msg", ex.getMessage());
+        }
+        return back(ra, page, title, status);
     }
 
     @PostMapping("/open")
-    public String open(@RequestParam Integer id, @RequestParam String isOpen, RedirectAttributes ra) {
-        articleService.updateOpen(id, isOpen);
-        ra.addFlashAttribute("msg", "1".equals(isOpen) ? "文章已公开" : "文章已设为私密");
-        return "redirect:/admin/articles";
+    public String open(@RequestParam Integer id,
+                       @RequestParam String isOpen,
+                       @RequestParam(defaultValue = "1") long page,
+                       @RequestParam(required = false) String title,
+                       @RequestParam(required = false) String status,
+                       RedirectAttributes ra) {
+        String publishStatus = "1".equals(isOpen) ? "1" : "2";
+        try {
+            ra.addFlashAttribute("msg", articleService.changeStatus(id, publishStatus));
+        } catch (BizException ex) {
+            ra.addFlashAttribute("msg", ex.getMessage());
+        }
+        return back(ra, page, title, status);
     }
 
     @PostMapping("/hot")
-    public String hot(@RequestParam Integer id, @RequestParam Integer isHot, RedirectAttributes ra) {
+    public String hot(@RequestParam Integer id,
+                      @RequestParam Integer isHot,
+                      @RequestParam(defaultValue = "1") long page,
+                      @RequestParam(required = false) String title,
+                      @RequestParam(required = false) String status,
+                      RedirectAttributes ra) {
         articleService.updateHot(id, isHot);
         ra.addFlashAttribute("msg", isHot != null && isHot == 1 ? "已设为热门" : "已取消热门");
+        return back(ra, page, title, status);
+    }
+
+    private String back(RedirectAttributes ra, long page, String title, String status) {
+        ra.addAttribute("page", page);
+        if (!Texts.blank(title)) {
+            ra.addAttribute("title", title);
+        }
+        String filter = articleStatus(status);
+        if (filter != null) {
+            ra.addAttribute("status", filter);
+        }
         return "redirect:/admin/articles";
+    }
+
+    private String articleStatus(String status) {
+        if ("0".equals(status) || "1".equals(status) || "2".equals(status)) {
+            return status;
+        }
+        return null;
     }
 }

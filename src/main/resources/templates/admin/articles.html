@@ -17,6 +17,12 @@
             <p class="flash" th:if="${msg}" th:text="${msg}"></p>
             <form class="search" action="/admin/articles" method="get">
                 <input type="text" name="title" placeholder="按标题搜索" th:value="${title}">
+                <select name="status">
+                    <option value="">全部状态</option>
+                    <option value="0" th:selected="${status == '0'}">草稿</option>
+                    <option value="1" th:selected="${status == '1'}">已发布</option>
+                    <option value="2" th:selected="${status == '2'}">已下线</option>
+                </select>
                 <button type="submit">搜索</button>
             </form>
             <div class="table-wrap">
@@ -45,8 +51,11 @@
                             <span class="muted" th:unless="${a.categoryName != null and !#strings.isEmpty(a.categoryName) and a.categoryName != 'null'}">—</span>
                         </td>
                         <td>
-                            <span class="badge ok" th:if="${a.isOpen == '1'}">公开</span>
-                            <span class="badge" th:unless="${a.isOpen == '1'}">私密</span>
+                            <span class="badge wait" th:if="${a.publishStatus == '0'}">草稿</span>
+                            <span class="badge ok" th:if="${a.publishStatus == '1'}">已发布</span>
+                            <span class="badge no" th:if="${a.publishStatus == '2'}">已下线</span>
+                            <span class="badge" th:if="${a.publishStatus != '0' and a.publishStatus != '1' and a.publishStatus != '2'}">状态异常</span>
+                            <span class="badge top" th:if="${a.isTop == 1}">置顶</span>
                             <span class="badge hot" th:if="${a.isHot == 1}">热门</span>
                         </td>
                         <td class="num" th:text="${a.visitCount != null ? a.visitCount : 0}">0</td>
@@ -56,18 +65,43 @@
                             <details class="more">
                                 <summary>更多</summary>
                                 <div class="more-menu">
-                                    <form th:action="@{/admin/articles/open}" method="post">
+                                    <form th:action="@{/admin/articles/status}" method="post" th:data-ask="${'确定将《' + a.title + '》存为草稿？'}" onsubmit="return confirm(this.getAttribute('data-ask'))">
                                         <input type="hidden" name="id" th:value="${a.aid}">
-                                        <input type="hidden" name="isOpen" th:value="${a.isOpen == '1' ? '0' : '1'}">
-                                        <button type="submit" th:text="${a.isOpen == '1' ? '设为私密' : '设为公开'}">设为公开</button>
+                                        <input type="hidden" name="publishStatus" value="0">
+                                        <input type="hidden" name="page" th:value="${pager.current}">
+                                        <input type="hidden" name="title" th:value="${title}">
+                                        <input type="hidden" name="status" th:value="${status}">
+                                        <button type="submit">存草稿</button>
+                                    </form>
+                                    <form th:action="@{/admin/articles/status}" method="post" th:data-ask="${'确定将《' + a.title + '》发布？'}" onsubmit="return confirm(this.getAttribute('data-ask'))">
+                                        <input type="hidden" name="id" th:value="${a.aid}">
+                                        <input type="hidden" name="publishStatus" value="1">
+                                        <input type="hidden" name="page" th:value="${pager.current}">
+                                        <input type="hidden" name="title" th:value="${title}">
+                                        <input type="hidden" name="status" th:value="${status}">
+                                        <button type="submit">发布</button>
+                                    </form>
+                                    <form th:action="@{/admin/articles/status}" method="post" th:data-ask="${'确定将《' + a.title + '》下线？'}" onsubmit="return confirm(this.getAttribute('data-ask'))">
+                                        <input type="hidden" name="id" th:value="${a.aid}">
+                                        <input type="hidden" name="publishStatus" value="2">
+                                        <input type="hidden" name="page" th:value="${pager.current}">
+                                        <input type="hidden" name="title" th:value="${title}">
+                                        <input type="hidden" name="status" th:value="${status}">
+                                        <button type="submit">下线</button>
                                     </form>
                                     <form th:action="@{/admin/articles/hot}" method="post">
                                         <input type="hidden" name="id" th:value="${a.aid}">
                                         <input type="hidden" name="isHot" th:value="${a.isHot == 1 ? 0 : 1}">
+                                        <input type="hidden" name="page" th:value="${pager.current}">
+                                        <input type="hidden" name="title" th:value="${title}">
+                                        <input type="hidden" name="status" th:value="${status}">
                                         <button type="submit" th:text="${a.isHot == 1 ? '取消热门' : '设为热门'}">设为热门</button>
                                     </form>
-                                    <form th:action="@{/admin/articles/delete}" method="post" onsubmit="return confirm('确定删除这篇文章？')">
+                                    <form th:action="@{/admin/articles/delete}" method="post" th:data-ask="${'确定删除《' + a.title + '》？'}" onsubmit="return confirm(this.getAttribute('data-ask'))">
                                         <input type="hidden" name="id" th:value="${a.aid}">
+                                        <input type="hidden" name="page" th:value="${pager.current}">
+                                        <input type="hidden" name="title" th:value="${title}">
+                                        <input type="hidden" name="status" th:value="${status}">
                                         <button class="danger" type="submit">删除</button>
                                     </form>
                                 </div>
@@ -78,9 +112,9 @@
                 </table>
             </div>
             <nav class="pager" th:if="${pager.pages > 1}">
-                <a th:if="${pager.current > 1}" th:href="@{/admin/articles(page=${pager.current - 1}, title=${title})}">上一页</a>
+                <a th:if="${pager.current > 1}" th:href="@{/admin/articles(page=${pager.current - 1}, title=${title}, status=${status})}">上一页</a>
                 <span th:text="${pager.current + ' / ' + pager.pages}"></span>
-                <a th:if="${pager.current < pager.pages}" th:href="@{/admin/articles(page=${pager.current + 1}, title=${title})}">下一页</a>
+                <a th:if="${pager.current < pager.pages}" th:href="@{/admin/articles(page=${pager.current + 1}, title=${title}, status=${status})}">下一页</a>
             </nav>
         </main>
     </div>

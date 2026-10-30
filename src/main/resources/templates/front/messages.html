@@ -3,11 +3,14 @@
 <head th:replace="~{fragments/front :: head('留言')}"></head>
 <body>
 <header th:replace="~{fragments/front :: navbar('messages')}"></header>
-<main class="read">
-    <header class="read-head">
-        <h1>留言板</h1>
-        <p class="read-meta">写下来，审核通过后会出现在下面。</p>
+<main class="sheet">
+    <header class="list-head">
+        <div>
+            <h1>留言</h1>
+            <p class="filter-note">写下来，审核通过后会出现在下面。</p>
+        </div>
     </header>
+    <div class="stream board">
 
     <div id="toast" class="toast" th:if="${note}" th:text="${note}">提示</div>
     <div id="toast" class="toast bad" th:if="${noteError}" th:text="${noteError}">错误</div>
@@ -43,7 +46,7 @@
     <section class="notes">
         <article class="note-card" th:each="item : ${pager.records}">
             <header class="note-top">
-                <span class="avatar" th:text="${item.initial}" th:style="'background:' + ${item.avatarColor}">友</span>
+                <span class="avatar" th:text="${item.initial}">友</span>
                 <b th:text="${item.nickname}">昵称</b>
                 <em class="tag-wait" th:if="${item.status == '0'}">待审核</em>
                 <time th:text="${item.createTime}">时间</time>
@@ -56,7 +59,7 @@
             <div class="note-replies" th:if="${item.replies != null and !item.replies.isEmpty()}">
                 <article class="note-card sub" th:each="reply : ${item.replies}">
                     <header class="note-top">
-                        <span class="avatar" th:text="${reply.initial}" th:style="'background:' + ${reply.avatarColor}">友</span>
+                        <span class="avatar" th:text="${reply.initial}">友</span>
                         <b th:text="${reply.nickname}">昵称</b>
                         <em class="tag-wait" th:if="${reply.status == '0'}">待审核</em>
                         <time th:text="${reply.createTime}">时间</time>
@@ -105,6 +108,7 @@
             <a th:if="${pager.current < pager.pages}" th:href="@{/messages(page=${pager.current + 1})}">下一页</a>
         </nav>
     </section>
+    </div>
 </main>
 <footer th:replace="~{fragments/front :: foot}"></footer>
 <script>

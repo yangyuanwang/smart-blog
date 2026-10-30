@@ -2,7 +2,10 @@
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/front :: head('注册')}"></head>
 <body>
-<a class="auth-brand" href="/" th:text="${site['site_name'] ?: '智能博客'}">智能博客</a>
+<a class="auth-brand" href="/">
+    <span th:text="${site['site_name'] ?: '智序'}">智序</span>
+    <small>SMART WORKSPACE</small>
+</a>
 <main class="auth">
     <div class="auth-glass">
         <h1>注册</h1>

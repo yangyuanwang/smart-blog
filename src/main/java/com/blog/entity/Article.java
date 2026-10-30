@@ -21,10 +21,15 @@ public class Article {
     private String createTime;
     private String updateTime;
     private Integer isHot;
+    private Integer isTop;
     private String logo;
     private Integer uid;
     @TableField("isOpen")
     private String isOpen;
+    private String publishStatus;
+    private String seoTitle;
+    private String seoKeywords;
+    private String seoDesc;
     @TableField("thumbsUp")
     private Long thumbsUp;
     @TableField("tagNames")

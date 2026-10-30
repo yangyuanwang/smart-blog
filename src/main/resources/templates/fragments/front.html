@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${pageTitle + ' · 智序'}">智序</title>
-    <link rel="stylesheet" th:href="@{/css/site.css(v=23)}">
+    <meta th:if="${seoKeywords != null and !#strings.isEmpty(seoKeywords)}" name="keywords" th:content="${seoKeywords}">
+    <meta th:if="${seoDesc != null and !#strings.isEmpty(seoDesc)}" name="description" th:content="${seoDesc}">
+    <link rel="stylesheet" th:href="@{/css/site.css(v=27)}">
 </head>
 <body>
 <header th:fragment="navbar(active)" class="top">
@@ -79,7 +81,7 @@
 <footer th:fragment="foot" class="foot">
     <div class="wrap foot-inner">
         <div class="foot-brand">
-            <strong>智序 · Smart ERP</strong>
+            <strong>智序 · SMART WORKSPACE</strong>
             <p>记录想法、整理知识、分享经验，让日常慢慢形成自己的秩序。</p>
         </div>
         <nav class="foot-links" aria-label="页脚">

@@ -17,7 +17,8 @@ export function getSessionId (): string {
   return ''
 }
 
-function readTokens (): { access: string, refresh: string } {
+/** 读取本地存储的令牌（服务端渲染时返回空令牌） */
+export function readTokens (): { access: string, refresh: string } {
   if (import.meta.client) {
     return {
       access: localStorage.getItem('blog:accessToken') ?? '',

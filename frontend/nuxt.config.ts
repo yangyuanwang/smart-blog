@@ -7,7 +7,7 @@ export default defineNuxtConfig({
   srcDir: 'app/',
   ssr: true,
 
-  modules: ['@nuxtjs/color-mode'],
+  modules: ['@nuxtjs/color-mode', '@nuxt/eslint'],
   colorMode: {
     // 暗色优先，class 策略（不带后缀），切换无闪烁
     preference: 'dark',

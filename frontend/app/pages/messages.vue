@@ -126,7 +126,9 @@ useSeoMeta({ title: '留言板', description: '给博主留言，楼中楼回复
           :disabled="submitting || !content.trim()"
           class="px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-40 focus-visible:ring-2 ring-app"
           :style="{ background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' }"
-        >{{ submitting ? '提交中…' : '发布留言' }}</button>
+        >
+{{ submitting ? '提交中…' : '发布留言' }}
+</button>
       </div>
     </form>
 
@@ -161,7 +163,9 @@ useSeoMeta({ title: '留言板', description: '给博主留言，楼中楼回复
               type="button"
               class="text-muted hover:text-main focus-visible:ring-2 ring-app rounded px-1"
               @click="remove(message.id)"
-            >删除</button>
+            >
+删除
+</button>
           </div>
         </div>
         <p class="mt-3 text-sm whitespace-pre-wrap break-words">{{ message.content }}</p>
@@ -184,14 +188,18 @@ useSeoMeta({ title: '留言板', description: '给博主留言，楼中楼回复
         class="px-3 py-1.5 rounded-lg border border-app bg-surface text-sm hover:bg-surface-2 disabled:opacity-40"
         :disabled="page <= 1"
         @click="goPage(page - 1)"
-      >上一页</button>
+      >
+上一页
+</button>
       <span class="text-sm text-muted px-2">{{ page }} / {{ totalPages }}</span>
       <button
         type="button"
         class="px-3 py-1.5 rounded-lg border border-app bg-surface text-sm hover:bg-surface-2 disabled:opacity-40"
         :disabled="page >= totalPages"
         @click="goPage(page + 1)"
-      >下一页</button>
+      >
+下一页
+</button>
     </nav>
   </div>
 </template>

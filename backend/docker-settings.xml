@@ -1,0 +1,10 @@
+<!-- 构建期 Maven 走阿里云镜像（国内网络） -->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0">
+  <mirrors>
+    <mirror>
+      <id>aliyun</id>
+      <mirrorOf>central</mirrorOf>
+      <url>https://maven.aliyun.com/nexus/content/groups/public/</url>
+    </mirror>
+  </mirrors>
+</settings>

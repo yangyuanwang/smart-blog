@@ -29,7 +29,9 @@ useSeoMeta({ title: is404.value ? '页面不存在' : '出错了' })
           class="px-5 py-2.5 rounded-xl text-sm font-medium text-white focus-visible:ring-2 ring-app"
           :style="{ background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' }"
           @click="goHome"
-        >回首页</button>
+        >
+回首页
+</button>
         <NuxtLink
           to="/articles"
           class="px-5 py-2.5 rounded-xl text-sm font-medium border border-app bg-surface hover:bg-surface-2 focus-visible:ring-2 ring-app transition-colors"

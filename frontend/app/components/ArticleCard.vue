@@ -14,7 +14,7 @@ interface Props {
   }
   showDigest?: boolean
 }
-const props = withDefaults(defineProps<Props>(), { showDigest: true })
+withDefaults(defineProps<Props>(), { showDigest: true })
 
 function fmtDate (value?: string) {
   return value?.slice(0, 10) ?? ''

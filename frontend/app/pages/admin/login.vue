@@ -49,7 +49,9 @@ async function submit () {
         :disabled="submitting"
         class="w-full py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-40 focus-visible:ring-2 ring-app"
         :style="{ background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' }"
-      >{{ submitting ? '登录中…' : '登录' }}</button>
+      >
+{{ submitting ? '登录中…' : '登录' }}
+</button>
     </form>
   </div>
 </template>

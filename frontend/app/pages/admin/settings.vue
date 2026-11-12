@@ -66,7 +66,9 @@ useSeoMeta({ title: '站点设置' })
         :disabled="saving"
         class="px-5 py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-40 focus-visible:ring-2 ring-app"
         :style="{ background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' }"
-      >{{ saving ? '保存中…' : '保存设置' }}</button>
+      >
+{{ saving ? '保存中…' : '保存设置' }}
+</button>
     </form>
   </div>
 </template>

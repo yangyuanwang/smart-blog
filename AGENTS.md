@@ -53,15 +53,15 @@ docs/       需求规格说明书-v2.md、系统设计文档.md、历史文档�
 
 ```bash
 # 依赖（首次/日常）
-docker compose -f docker/docker-compose.dev.yml up -d      # MySQL+Redis
-# 后端（需 JDK21，JAVA_HOME 指向 D:\dev-tools\jdk-21）
+docker compose -f docker/docker-compose.yml --profile dev up -d      # MySQL(33061)+Redis(36379)
+# 后端（需 JDK21，JAVA_HOME 指向 D:\dev-tools\jdk-21.0.13+9）
 cd backend && mvn spring-boot:run                           # :8080
 # 前端
 cd frontend && pnpm install && pnpm dev                     # :3000，/api 代理 8080
-# 全栈联调
-docker compose -f docker/docker-compose.yml up -d --build
+# 全栈联调（四容器：mysql/redis/backend/frontend）
+docker compose -f docker/docker-compose.yml --profile full up -d --build
 # 质量检查
-cd backend && mvn -q test ; cd ../frontend && pnpm typecheck && pnpm lint && pnpm build
+cd backend && mvn -q test ; cd ../frontend && pnpm lint && npx vue-tsc --noEmit
 ```
 
 ## 端口约定

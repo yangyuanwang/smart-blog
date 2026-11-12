@@ -161,13 +161,17 @@ useSeoMeta({ title: '文章管理' })
                   type="button"
                   class="px-2 py-1 rounded-md border border-app hover:bg-surface-2"
                   @click="changeStatus(article.aid, '1')"
-                >发布</button>
+                >
+发布
+</button>
                 <button
                   v-if="article.publishStatus === '1'"
                   type="button"
                   class="px-2 py-1 rounded-md border border-app hover:bg-surface-2"
                   @click="changeStatus(article.aid, '2')"
-                >下线</button>
+                >
+下线
+</button>
                 <button type="button" class="px-2 py-1 rounded-md border border-app hover:bg-surface-2" @click="toggleTop(article)">
                   {{ article.isTop === 1 ? '取消置顶' : '置顶' }}
                 </button>

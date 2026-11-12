@@ -57,7 +57,9 @@ async function submit () {
         :disabled="submitting"
         class="w-full py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-40 focus-visible:ring-2 ring-app"
         :style="{ background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' }"
-      >{{ submitting ? '登录中…' : '登录' }}</button>
+      >
+{{ submitting ? '登录中…' : '登录' }}
+</button>
     </form>
     <div class="mt-4 flex justify-between text-sm text-muted">
       <NuxtLink to="/reset" class="hover:text-main focus-visible:ring-2 ring-app rounded">忘记密码？</NuxtLink>

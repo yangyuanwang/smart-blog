@@ -1,7 +1,0 @@
-feat(frontend): RSS, sitemap, cmd-K palette, OG meta and content seeds
-
-- Nitro server routes /rss.xml and /sitemap.xml (apiOrigin runtime config, cache headers)
-- CommandPalette: Ctrl/Cmd-K invoke, debounced article search via /api/v1/search, nav shortcuts, full keyboard support with focus return
-- article og:image falls back to cover (satori/resvg native binary failed on Windows host - documented for Docker build later)
-- scripts/seed-content.mjs: 4 quality articles + featured project via admin API (repeatable)
-- verified: RSS UTF-8 with 8 items, sitemap lists articles, palette search returns seeded content

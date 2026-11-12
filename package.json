@@ -1,0 +1,13 @@
+{
+  "name": "smart-blog-workspace",
+  "private": true,
+  "description": "smart-blog monorepo 根：仅承载 Git 钩子与提交规范",
+  "scripts": {
+    "prepare": "husky || true"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0"
+  }
+}

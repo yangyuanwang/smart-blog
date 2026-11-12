@@ -116,7 +116,8 @@ useSeoMeta({ title: '作品集管理' })
       <li v-for="project in data ?? []" :key="project.id" class="flex items-center gap-3 rounded-xl border border-app bg-surface px-4 py-3">
         <img v-if="project.cover" :src="project.cover" alt="" class="w-14 h-10 object-cover rounded border border-app">
         <div class="min-w-0">
-          <p class="font-medium">{{ project.name }}
+          <p class="font-medium">
+{{ project.name }}
             <span v-if="project.featured === '1'" class="text-xs ml-1" style="color: var(--color-warn)">精选</span>
             <span v-if="project.status !== '1'" class="text-xs ml-1 text-muted">隐藏</span>
           </p>

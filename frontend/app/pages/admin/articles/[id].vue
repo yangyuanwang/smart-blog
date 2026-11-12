@@ -212,20 +212,26 @@ useSeoMeta({ title: isEdit.value ? '编辑文章' : '新建文章' })
           class="px-5 py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-40 focus-visible:ring-2 ring-app"
           :style="{ background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' }"
           @click="save('1')"
-        >{{ saving ? '处理中…' : '发布' }}</button>
+        >
+{{ saving ? '处理中…' : '发布' }}
+</button>
         <button
           type="button"
           :disabled="saving"
           class="px-5 py-2.5 rounded-lg text-sm border border-app bg-surface hover:bg-surface-2 focus-visible:ring-2 ring-app"
           @click="save('0')"
-        >存为草稿</button>
+        >
+存为草稿
+</button>
         <button
           v-if="isEdit"
           type="button"
           :disabled="saving"
           class="px-5 py-2.5 rounded-lg text-sm border border-app bg-surface hover:bg-surface-2 focus-visible:ring-2 ring-app"
           @click="save('2')"
-        >下线</button>
+        >
+下线
+</button>
       </div>
     </div>
   </div>

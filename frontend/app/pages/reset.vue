@@ -71,7 +71,9 @@ async function confirmReset () {
         :disabled="submitting"
         class="w-full py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-40 focus-visible:ring-2 ring-app"
         :style="{ background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' }"
-      >{{ submitting ? '发送中…' : '发送验证码' }}</button>
+      >
+{{ submitting ? '发送中…' : '发送验证码' }}
+</button>
     </form>
 
     <form v-else class="mt-5 space-y-4" @submit.prevent="confirmReset">
@@ -93,7 +95,9 @@ async function confirmReset () {
         :disabled="submitting"
         class="w-full py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-40 focus-visible:ring-2 ring-app"
         :style="{ background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' }"
-      >{{ submitting ? '提交中…' : '重置密码' }}</button>
+      >
+{{ submitting ? '提交中…' : '重置密码' }}
+</button>
     </form>
 
     <p class="mt-4 text-center text-sm text-muted">

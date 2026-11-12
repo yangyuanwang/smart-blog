@@ -118,17 +118,23 @@ useSeoMeta({ title: '用户管理' })
                     type="button"
                     class="px-2 py-1 rounded-md border border-app hover:bg-surface-2"
                     @click="changeState(user, user.state === '0' ? '1' : '0')"
-                  >{{ user.state === '0' ? '解锁' : '锁定' }}</button>
+                  >
+{{ user.state === '0' ? '解锁' : '锁定' }}
+</button>
                   <button
                     type="button"
                     class="px-2 py-1 rounded-md border border-app hover:bg-surface-2"
                     @click="changeRole(user, user.role === '0' ? '1' : '0')"
-                  >{{ user.role === '0' ? '降为用户' : '设为管理员' }}</button>
+                  >
+{{ user.role === '0' ? '降为用户' : '设为管理员' }}
+</button>
                   <button
                     type="button"
                     class="px-2 py-1 rounded-md border border-app hover:bg-surface-2"
                     @click="resetting = { uid: user.uid, password: '' }"
-                  >重置密码</button>
+                  >
+重置密码
+</button>
                 </template>
                 <span v-else class="text-xs text-muted">当前登录账号</span>
               </div>

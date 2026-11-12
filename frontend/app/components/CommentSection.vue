@@ -111,7 +111,9 @@ function fmtTime (value: string) {
           :disabled="submitting || !content.trim()"
           class="px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-40 focus-visible:ring-2 ring-app"
           :style="{ background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' }"
-        >{{ submitting ? '提交中…' : '提交' }}</button>
+        >
+{{ submitting ? '提交中…' : '提交' }}
+</button>
       </div>
     </form>
     <p v-else class="mt-6 text-sm text-muted">评论已关闭</p>

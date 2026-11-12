@@ -43,7 +43,9 @@ useSeoMeta({ title: '友链', description: '交换友链，一起在互联网上
         class="px-4 py-2 rounded-lg text-sm border border-app bg-surface hover:bg-surface-2 focus-visible:ring-2 ring-app transition-colors"
         :aria-expanded="showForm"
         @click="showForm = !showForm"
-      >{{ showForm ? '收起' : '申请友链' }}</button>
+      >
+{{ showForm ? '收起' : '申请友链' }}
+</button>
     </div>
 
     <!-- 申请表单 -->
@@ -76,7 +78,9 @@ useSeoMeta({ title: '友链', description: '交换友链，一起在互联网上
           :disabled="submitting"
           class="px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-40 focus-visible:ring-2 ring-app"
           :style="{ background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' }"
-        >{{ submitting ? '提交中…' : '提交申请' }}</button>
+        >
+{{ submitting ? '提交中…' : '提交申请' }}
+</button>
       </div>
     </form>
 

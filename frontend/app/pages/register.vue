@@ -63,7 +63,9 @@ async function submit () {
         :disabled="submitting"
         class="w-full py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-40 focus-visible:ring-2 ring-app"
         :style="{ background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' }"
-      >{{ submitting ? '注册中…' : '注册' }}</button>
+      >
+{{ submitting ? '注册中…' : '注册' }}
+</button>
       <p v-if="success" class="text-sm" style="color: var(--color-ok)" role="status">注册成功，已自动登录</p>
     </form>
     <p class="mt-4 text-center text-sm text-muted">

@@ -101,7 +101,9 @@ useSeoMeta({
           <button
             type="submit"
             class="px-4 py-2 rounded-lg text-sm border border-app bg-surface hover:bg-surface-2 focus-visible:ring-2 ring-app transition-colors"
-          >搜索</button>
+          >
+搜索
+</button>
         </form>
       </div>
 
@@ -115,7 +117,9 @@ useSeoMeta({
           type="button"
           class="underline hover:text-main focus-visible:ring-2 ring-app rounded"
           @click="router.push('/articles')"
-        >清除</button>
+        >
+清除
+</button>
       </div>
 
       <p v-if="pending" class="mt-6 text-muted" role="status">加载中…</p>
@@ -138,14 +142,18 @@ useSeoMeta({
           class="px-3 py-1.5 rounded-lg border border-app bg-surface text-sm hover:bg-surface-2 disabled:opacity-40 focus-visible:ring-2 ring-app"
           :disabled="page <= 1"
           @click="goPage(page - 1)"
-        >上一页</button>
+        >
+上一页
+</button>
         <span class="text-sm text-muted px-2">{{ page }} / {{ totalPages }}</span>
         <button
           type="button"
           class="px-3 py-1.5 rounded-lg border border-app bg-surface text-sm hover:bg-surface-2 disabled:opacity-40 focus-visible:ring-2 ring-app"
           :disabled="page >= totalPages"
           @click="goPage(page + 1)"
-        >下一页</button>
+        >
+下一页
+</button>
       </nav>
     </section>
 

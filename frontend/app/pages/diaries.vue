@@ -10,7 +10,6 @@ interface DiaryItem {
 
 const { data, error, pending } = await useAsyncData('diaries', () => api<DiaryItem[]>('/diaries'))
 
-const moods = ['随记', '开工', '想走', '读完', '高兴', '发呆']
 const moodColor: Record<string, string> = {
   随记: 'var(--color-accent)',
   开工: 'var(--color-ok)',

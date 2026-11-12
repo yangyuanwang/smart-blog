@@ -1,10 +1,7 @@
-feat(frontend): full admin workbench - dashboard, articles, categories/tags, audits, links, projects, users, logs, settings, profile
+feat(frontend): RSS, sitemap, cmd-K palette, OG meta and content seeds
 
-- admin layout: grouped sidebar with collapse, mobile drawer, logout
-- admin-auth route middleware (refresh fallback) + dedicated admin login (role-checked endpoint)
-- dashboard stat cards; article manager with status machine, topping, AI regen, delete
-- article editor: cover upload, tags, SEO fields, draft/publish/offline
-- categories+tags two-pane with rename/re-assign (V1.1 batch2 parity); comment/message audit; link apply approve/reject
-- projects CRUD with cover upload; diaries/notices CRUD; users state/role/password-reset modal; login logs; settings form (cache-busting); profile with avatar + password change
-- exported readTokens from useApi composable (auto-import bug fix)
-- verified in browser: login -> dashboard -> articles list with real data
+- Nitro server routes /rss.xml and /sitemap.xml (apiOrigin runtime config, cache headers)
+- CommandPalette: Ctrl/Cmd-K invoke, debounced article search via /api/v1/search, nav shortcuts, full keyboard support with focus return
+- article og:image falls back to cover (satori/resvg native binary failed on Windows host - documented for Docker build later)
+- scripts/seed-content.mjs: 4 quality articles + featured project via admin API (repeatable)
+- verified: RSS UTF-8 with 8 items, sitemap lists articles, palette search returns seeded content

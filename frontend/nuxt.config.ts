@@ -21,6 +21,11 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/tokens.css'],
 
+  // 服务端路由（rss/sitemap/og）访问后端的源；容器化部署时指向 backend 服务
+  runtimeConfig: {
+    apiOrigin: process.env.NUXT_API_ORIGIN || 'http://localhost:8080'
+  },
+
   // API 与上传目录代理：routeRules 同时覆盖浏览器请求与 SSR 内部 $fetch
   // （目标主机可用 NUXT_PROXY_TARGET 覆盖，容器化部署时指向 backend 服务名）
   routeRules: {

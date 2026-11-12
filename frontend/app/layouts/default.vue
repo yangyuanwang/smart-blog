@@ -94,6 +94,9 @@ const siteName = computed(() => '智序 SMART WORKSPACE')
       <slot />
     </main>
 
+    <!-- ⌘K 全局命令面板 -->
+    <CommandPalette />
+
     <footer class="border-t border-app mt-8">
       <div class="mx-auto max-w-6xl px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted">
         <p>© {{ new Date().getFullYear() }} 智序 SMART WORKSPACE</p>

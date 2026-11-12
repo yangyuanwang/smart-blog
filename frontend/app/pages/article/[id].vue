@@ -154,13 +154,18 @@ async function like () {
 }
 
 const pageTitle = computed(() => article.value.seoTitle || article.value.title)
+const origin = useRequestURL().origin
 useSeoMeta({
   title: pageTitle.value,
   description: article.value.seoDesc || article.value.digest,
   keywords: article.value.seoKeywords,
   ogTitle: pageTitle.value,
   ogDescription: article.value.seoDesc || article.value.digest,
-  ogType: 'article'
+  ogType: 'article',
+  ogImage: article.value.logo
+    ? (article.value.logo.startsWith('http') ? article.value.logo : origin + article.value.logo)
+    : undefined,
+  twitterCard: 'summary_large_image'
 })
 useHead({
   script: [

@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -43,6 +43,11 @@ public class FileStorage {
         if (!"jpg".equals(ext) && !"jpeg".equals(ext) && !"png".equals(ext) && !"gif".equals(ext) && !"webp".equals(ext)) {
             throw new BizException("只支持 jpg、png、gif、webp 图片");
         }
+        byte[] head = readMagic(file);
+        if (!magicMatches(ext, head)) {
+            // 扩展名伪装防护：内容魔数必须与扩展名一致
+            throw new BizException("文件内容与图片格式不符");
+        }
         String filename = UUID.randomUUID().toString().replace("-", "") + "." + ext;
         try (InputStream input = file.getInputStream()) {
             Files.copy(input, root.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
@@ -50,6 +55,54 @@ public class FileStorage {
             throw new BizException("图片保存失败");
         }
         return "/uploads/" + filename;
+    }
+
+    /**
+     * 读取文件头魔数字节（不足 12 字节时按实际长度返回）。
+     *
+     * @param file 上传文件
+     * @return 文件头字节
+     */
+    private byte[] readMagic(MultipartFile file) {
+        try (InputStream input = file.getInputStream()) {
+            byte[] head = new byte[12];
+            int read = input.readNBytes(head, 0, head.length);
+            if (read < head.length) {
+                byte[] actual = new byte[read];
+                System.arraycopy(head, 0, actual, 0, read);
+                return actual;
+            }
+            return head;
+        } catch (IOException ex) {
+            throw new BizException("图片读取失败");
+        }
+    }
+
+    /**
+     * 校验魔数与扩展名匹配（JPEG/PNG/GIF/WebP）。
+     *
+     * @param ext  扩展名
+     * @param head 文件头
+     * @return 匹配返回 true
+     */
+    private boolean magicMatches(String ext, byte[] head) {
+        if (head.length < 4) {
+            return false;
+        }
+        if ("jpg".equals(ext) || "jpeg".equals(ext)) {
+            return (head[0] & 0xFF) == 0xFF && (head[1] & 0xFF) == 0xD8;
+        }
+        if ("png".equals(ext)) {
+            return (head[0] & 0xFF) == 0x89 && (head[1] & 0xFF) == 0x50;
+        }
+        if ("gif".equals(ext)) {
+            return head[0] == 'G' && head[1] == 'I' && head[2] == 'F';
+        }
+        if ("webp".equals(ext)) {
+            return head.length >= 12 && head[0] == 'R' && head[1] == 'I' && head[2] == 'F' && head[3] == 'F'
+                    && head[8] == 'W' && head[9] == 'E' && head[10] == 'B' && head[11] == 'P';
+        }
+        return false;
     }
 
     private String extension(String name) {

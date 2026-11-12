@@ -44,12 +44,14 @@ public class ContentService {
     private final DiaryMapper diaryMapper;
     private final NoticeMapper noticeMapper;
     private final ArticleMapper articleMapper;
+    private final com.blog.mapper.ArticleTagMapper articleTagMapper;
     private final ArticleService articleService;
     private final Fmt fmt;
 
     public ContentService(CategoryMapper categoryMapper, TagMapper tagMapper, LinkMapper linkMapper,
                           CommentMapper commentMapper, MessageMapper messageMapper, DiaryMapper diaryMapper,
-                          NoticeMapper noticeMapper, ArticleMapper articleMapper, ArticleService articleService, Fmt fmt) {
+                          NoticeMapper noticeMapper, ArticleMapper articleMapper,
+                          com.blog.mapper.ArticleTagMapper articleTagMapper, ArticleService articleService, Fmt fmt) {
         this.categoryMapper = categoryMapper;
         this.tagMapper = tagMapper;
         this.linkMapper = linkMapper;
@@ -58,6 +60,7 @@ public class ContentService {
         this.diaryMapper = diaryMapper;
         this.noticeMapper = noticeMapper;
         this.articleMapper = articleMapper;
+        this.articleTagMapper = articleTagMapper;
         this.articleService = articleService;
         this.fmt = fmt;
     }
@@ -78,36 +81,24 @@ public class ContentService {
 
     public Map<Integer, Integer> countArticlesByTag(List<Tag> tags) {
         Map<Integer, Integer> counts = new LinkedHashMap<Integer, Integer>();
-        Map<String, List<Integer>> index = new LinkedHashMap<String, List<Integer>>();
-        if (tags != null) {
-            for (Tag tag : tags) {
-                if (tag.getTid() == null) {
-                    continue;
-                }
-                counts.put(tag.getTid(), 0);
-                if (Texts.blank(tag.getTname())) {
-                    continue;
-                }
-                String key = tag.getTname().trim();
-                List<Integer> ids = index.get(key);
-                if (ids == null) {
-                    ids = new ArrayList<Integer>();
-                    index.put(key, ids);
-                }
-                ids.add(tag.getTid());
+        if (tags == null) {
+            return counts;
+        }
+        // 聚合下推 SQL（基于 V3 关联表），替代旧的全表载入内存统计
+        Map<Integer, Long> sqlCounts = new LinkedHashMap<Integer, Long>();
+        for (Map<String, Object> row : articleService.countByTagId()) {
+            Object tagId = row.get("tagId");
+            Object cnt = row.get("cnt");
+            if (tagId instanceof Number id && cnt instanceof Number count) {
+                sqlCounts.put(id.intValue(), count.longValue());
             }
         }
-        List<Article> articles = articleMapper.selectList(new QueryWrapper<Article>());
-        for (Article article : articles) {
-            for (String name : fmt.tags(article.getTagNames())) {
-                List<Integer> ids = index.get(name);
-                if (ids == null) {
-                    continue;
-                }
-                for (Integer id : ids) {
-                    counts.put(id, counts.get(id) + 1);
-                }
+        for (Tag tag : tags) {
+            if (tag.getTid() == null) {
+                continue;
             }
+            Long count = sqlCounts.get(tag.getTid());
+            counts.put(tag.getTid(), count == null ? 0 : count.intValue());
         }
         return counts;
     }
@@ -124,6 +115,28 @@ public class ContentService {
         Category category = new Category();
         category.setCname(cname);
         categoryMapper.insert(category);
+    }
+
+    /**
+     * 栏目重命名（V1.1 第二批补齐的能力）。
+     *
+     * @param cid  栏目 ID
+     * @param name 新名称
+     */
+    public void renameCategory(Integer cid, String name) {
+        Category category = categoryMapper.selectById(cid);
+        if (category == null) {
+            throw new BizException("栏目不存在");
+        }
+        String cname = Texts.trim(name);
+        if (cname.isEmpty() || cname.length() > 30) {
+            throw new BizException("栏目名称需要 1 到 30 个字符");
+        }
+        Long exists = categoryMapper.selectCount(new QueryWrapper<Category>().eq("cname", cname).ne("cid", cid));
+        if (exists != null && exists > 0) {
+            throw new BizException("栏目已存在");
+        }
+        categoryMapper.update(null, new UpdateWrapper<Category>().eq("cid", cid).set("cname", cname));
     }
 
     public void deleteCategory(Integer cid) {
@@ -149,7 +162,38 @@ public class ContentService {
         tagMapper.insert(tag);
     }
 
+    /**
+     * 编辑标签（改名或换栏目，V1.1 第二批补齐的能力）。
+     *
+     * @param tid  标签 ID
+     * @param name 新名称（可空表示不变）
+     * @param cid  新栏目（可空表示不变）
+     */
+    public void updateTag(Integer tid, String name, Integer cid) {
+        Tag tag = tagMapper.selectById(tid);
+        if (tag == null) {
+            throw new BizException("标签不存在");
+        }
+        UpdateWrapper<Tag> wrapper = new UpdateWrapper<Tag>().eq("tid", tid);
+        if (!Texts.blank(name)) {
+            String tname = Texts.trim(name);
+            if (tname.isEmpty() || tname.length() > 30) {
+                throw new BizException("标签名称需要 1 到 30 个字符");
+            }
+            wrapper.set("tname", tname);
+        }
+        if (cid != null) {
+            if (categoryMapper.selectById(cid) == null) {
+                throw new BizException("栏目不存在");
+            }
+            wrapper.set("cid", cid);
+        }
+        tagMapper.update(null, wrapper);
+    }
+
     public void deleteTag(Integer tid) {
+        // 关联表同步清理，避免残留孤儿关联
+        articleTagMapper.delete(new QueryWrapper<com.blog.entity.ArticleTag>().eq("tag_id", tid));
         tagMapper.deleteById(tid);
     }
 
@@ -161,17 +205,17 @@ public class ContentService {
         String name = Texts.trim(link.getSiteName());
         String url = Texts.trim(link.getSiteUrl());
         String desc = Texts.trim(link.getSiteDesc());
-        if (name.isEmpty() || name.length() > 15) {
-            throw new BizException("站点名不超过 15 个字符");
+        if (name.isEmpty() || name.length() > 30) {
+            throw new BizException("站点名不超过 30 个字符");
         }
-        if (url.isEmpty() || url.length() > 45) {
-            throw new BizException("站点地址不超过 45 个字符");
+        if (url.isEmpty() || url.length() > 200) {
+            throw new BizException("站点地址不超过 200 个字符");
         }
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
             throw new BizException("站点地址需要以 http:// 或 https:// 开头");
         }
-        if (desc.isEmpty() || desc.length() > 45) {
-            throw new BizException("站点描述不超过 45 个字符");
+        if (desc.isEmpty() || desc.length() > 100) {
+            throw new BizException("站点描述不超过 100 个字符");
         }
         link.setSiteName(name);
         link.setSiteUrl(url);
@@ -232,9 +276,21 @@ public class ContentService {
             wrapper.eq("status", status);
         }
         Page<Comment> result = commentMapper.selectPage(new Page<Comment>(page, size), wrapper);
+        // 批量补文章标题，消除逐条 selectById 的 N+1
+        List<Integer> aids = new ArrayList<Integer>();
         for (Comment comment : result.getRecords()) {
-            Article article = articleMapper.selectById(comment.getAid());
-            comment.setArticleTitle(article == null ? "文章已删除" : article.getTitle());
+            if (comment.getAid() != null) {
+                aids.add(comment.getAid());
+            }
+        }
+        Map<Integer, String> titles = new LinkedHashMap<Integer, String>();
+        if (!aids.isEmpty()) {
+            for (Article article : articleMapper.selectBatchIds(aids)) {
+                titles.put(article.getAid(), article.getTitle());
+            }
+        }
+        for (Comment comment : result.getRecords()) {
+            comment.setArticleTitle(titles.getOrDefault(comment.getAid(), "文章已删除"));
         }
         return result;
     }

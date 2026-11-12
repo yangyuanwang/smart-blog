@@ -33,15 +33,29 @@ public class ArticleService {
     private final TagMapper tagMapper;
     private final UserMapper userMapper;
     private final SmartService smartService;
+    private final com.blog.mapper.ArticleTagMapper articleTagMapper;
     private final Fmt fmt;
 
+    /**
+     * 构造文章服务。
+     *
+     * @param articleMapper    文章 Mapper
+     * @param categoryMapper   栏目 Mapper
+     * @param tagMapper        标签 Mapper
+     * @param userMapper       用户 Mapper
+     * @param smartService     Markdown 工具
+     * @param articleTagMapper 文章-标签关联 Mapper
+     * @param fmt              模板辅助组件
+     */
     public ArticleService(ArticleMapper articleMapper, CategoryMapper categoryMapper, TagMapper tagMapper,
-                          UserMapper userMapper, SmartService smartService, Fmt fmt) {
+                          UserMapper userMapper, SmartService smartService,
+                          com.blog.mapper.ArticleTagMapper articleTagMapper, Fmt fmt) {
         this.articleMapper = articleMapper;
         this.categoryMapper = categoryMapper;
         this.tagMapper = tagMapper;
         this.userMapper = userMapper;
         this.smartService = smartService;
+        this.articleTagMapper = articleTagMapper;
         this.fmt = fmt;
     }
 
@@ -138,7 +152,15 @@ public class ArticleService {
         return pool;
     }
 
-    public void save(Article form, User user, String logo) {
+    /**
+     * 保存文章（新建或更新）：状态机校验、标签规范化并同步关联表；返回文章 ID。
+     *
+     * @param form   表单载体（新建后回填 aid）
+     * @param user   作者
+     * @param logo   新封面地址（可空表示不变）
+     * @return 文章 ID
+     */
+    public Integer save(Article form, User user, String logo) {
         if (Texts.blank(form.getTitle())) {
             throw new BizException("请填写标题");
         }
@@ -184,6 +206,35 @@ public class ArticleService {
         } else {
             article.setUpdateTime(Texts.now());
             articleMapper.updateById(article);
+        }
+        // 标签关联表与冗余文本同步：按名字补齐 t_tag 行（挂在本文章栏目下），重建关联
+        syncTagRelations(article);
+        return article.getAid();
+    }
+
+    /**
+     * 重建文章-标签关联：先按名字确保标签存在，再以关联表全量替换。
+     *
+     * @param article 已落库的文章
+     */
+    private void syncTagRelations(Article article) {
+        articleTagMapper.delete(new QueryWrapper<com.blog.entity.ArticleTag>().eq("article_id", article.getAid()));
+        for (String name : fmt.tags(article.getTagNames())) {
+            Tag tag = tagMapper.selectOne(new QueryWrapper<Tag>().eq("tname", name).last("limit 1"));
+            if (tag == null) {
+                tag = new Tag();
+                tag.setTname(name);
+                tag.setCid(article.getCid());
+                tagMapper.insert(tag);
+            }
+            com.blog.entity.ArticleTag relation = new com.blog.entity.ArticleTag();
+            relation.setArticleId(article.getAid());
+            relation.setTagId(tag.getTid());
+            try {
+                articleTagMapper.insert(relation);
+            } catch (org.springframework.dao.DuplicateKeyException ignored) {
+                // 同名标签命中多行时忽略重复关联
+            }
         }
     }
 
@@ -280,15 +331,35 @@ public class ArticleService {
 
     public Map<Integer, Long> countByCategory() {
         Map<Integer, Long> map = new HashMap<Integer, Long>();
-        List<Article> articles = articleMapper.selectList(new QueryWrapper<Article>().select("aid", "cid", "isOpen").eq("isOpen", "1"));
-        for (Article article : articles) {
-            if (article.getCid() == null) {
-                continue;
+        // 聚合下推到 SQL，替代旧的全表内存统计
+        for (Map<String, Object> row : articleMapper.countByCategory()) {
+            Object cid = row.get("cid");
+            Object cnt = row.get("cnt");
+            if (cid instanceof Number id && cnt instanceof Number count) {
+                map.put(id.intValue(), count.longValue());
             }
-            Long count = map.get(article.getCid());
-            map.put(article.getCid(), count == null ? 1L : count + 1);
         }
         return map;
+    }
+
+    /**
+     * 公开文章按标签 ID 计数（SQL 聚合，供标签列表展示）。
+     *
+     * @return tagId -> 文章数
+     */
+    public List<Map<String, Object>> countByTagId() {
+        return articleMapper.countByTag();
+    }
+
+    /**
+     * 读取点赞数（不递增）。
+     *
+     * @param id 文章 ID
+     * @return 点赞数；文章不存在返回 0
+     */
+    public long thumbsUp(Integer id) {
+        Article article = articleMapper.selectById(id);
+        return article == null || article.getThumbsUp() == null ? 0L : article.getThumbsUp();
     }
 
     private QueryWrapper<Article> publicWrapper(Integer cid, String q, String tag) {

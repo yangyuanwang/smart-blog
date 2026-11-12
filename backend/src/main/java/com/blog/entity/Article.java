@@ -36,6 +36,10 @@ public class Article {
     private String tagNames;
     @TableField("isCommented")
     private String isCommented;
+    /** AI 摘要（未生成时为 null） */
+    private String aiSummary;
+    /** AI 摘要生成时间 */
+    private String aiGeneratedAt;
 
     @TableField(exist = false)
     private String categoryName;

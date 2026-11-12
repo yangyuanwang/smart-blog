@@ -1,0 +1,124 @@
+-- V1 基线：v1 现网结构（schema.sql 等价物）。
+-- 已有数据的库通过 flyway.baseline-on-migrate 基线化，不会执行本文件；全新环境从这里建表。
+CREATE TABLE t_user (
+  uid INT NOT NULL AUTO_INCREMENT COMMENT '主键',
+  username VARCHAR(32) NOT NULL COMMENT '用户名',
+  nickname VARCHAR(32) DEFAULT NULL COMMENT '昵称',
+  password VARCHAR(32) NOT NULL COMMENT '密码（历史 MD5，运行期升级 BCrypt）',
+  role CHAR(1) DEFAULT NULL COMMENT '0管理员 1普通用户',
+  createTime CHAR(10) DEFAULT NULL COMMENT '创建日期',
+  lastLoginTime CHAR(19) DEFAULT NULL COMMENT '最近登录时间',
+  state CHAR(1) DEFAULT NULL COMMENT '0锁定 1正常',
+  loginIp VARCHAR(17) DEFAULT NULL COMMENT '登录IP',
+  phone CHAR(11) DEFAULT NULL COMMENT '手机号',
+  loginCount INT DEFAULT NULL COMMENT '登录次数',
+  img VARCHAR(255) DEFAULT NULL COMMENT '头像',
+  PRIMARY KEY (uid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE t_category (
+  cid INT NOT NULL AUTO_INCREMENT,
+  cname VARCHAR(255) DEFAULT NULL COMMENT '栏目名称',
+  PRIMARY KEY (cid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE t_tag (
+  tid INT NOT NULL AUTO_INCREMENT COMMENT '主键',
+  tname VARCHAR(255) DEFAULT NULL COMMENT '标签名称',
+  cid INT DEFAULT NULL COMMENT '所属栏目',
+  PRIMARY KEY (tid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE t_article (
+  aid INT NOT NULL AUTO_INCREMENT COMMENT '主键',
+  title VARCHAR(255) DEFAULT NULL COMMENT '标题',
+  digest LONGTEXT COMMENT '摘要',
+  content LONGTEXT COMMENT '正文',
+  cid INT DEFAULT NULL COMMENT '栏目',
+  visit_count INT DEFAULT NULL COMMENT '访问量',
+  create_time CHAR(19) DEFAULT NULL COMMENT '发布时间',
+  update_time CHAR(19) DEFAULT NULL COMMENT '更新时间',
+  is_hot INT DEFAULT NULL COMMENT '0普通 1热门',
+  is_top INT NOT NULL DEFAULT 0 COMMENT '0否 1置顶',
+  logo VARCHAR(255) DEFAULT NULL COMMENT '封面',
+  uid INT DEFAULT NULL COMMENT '作者',
+  isOpen CHAR(1) DEFAULT NULL COMMENT '0私密 1公开',
+  publish_status CHAR(1) NOT NULL COMMENT '0草稿 1已发布 2已下线',
+  seo_title VARCHAR(255) DEFAULT NULL COMMENT 'SEO标题',
+  seo_keywords VARCHAR(255) DEFAULT NULL COMMENT 'SEO关键词',
+  seo_desc VARCHAR(500) DEFAULT NULL COMMENT 'SEO描述',
+  thumbsUp BIGINT DEFAULT NULL COMMENT '点赞数',
+  tagNames VARCHAR(255) DEFAULT NULL COMMENT '标签（冗余文本，V3 起以 t_article_tag 为准）',
+  isCommented CHAR(1) DEFAULT NULL COMMENT '是否被评论',
+  PRIMARY KEY (aid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE t_link (
+  id INT NOT NULL AUTO_INCREMENT,
+  site_name VARCHAR(15) NOT NULL COMMENT '站点名',
+  site_url VARCHAR(45) NOT NULL COMMENT '站点地址',
+  site_desc VARCHAR(45) NOT NULL COMMENT '站点描述',
+  sort INT NOT NULL DEFAULT 0 COMMENT '排序',
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE t_comment (
+  id INT NOT NULL AUTO_INCREMENT,
+  aid INT NOT NULL COMMENT '文章',
+  uid INT DEFAULT NULL COMMENT '用户',
+  nickname VARCHAR(32) NOT NULL COMMENT '昵称',
+  content VARCHAR(1000) NOT NULL COMMENT '评论',
+  create_time CHAR(19) NOT NULL,
+  status CHAR(1) NOT NULL DEFAULT '1' COMMENT '0待审 1通过',
+  PRIMARY KEY (id),
+  KEY idx_comment_aid (aid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE t_message (
+  id INT NOT NULL AUTO_INCREMENT,
+  nickname VARCHAR(32) NOT NULL,
+  content VARCHAR(1000) NOT NULL,
+  reply VARCHAR(1000) DEFAULT NULL,
+  create_time CHAR(19) NOT NULL,
+  status CHAR(1) NOT NULL DEFAULT '0' COMMENT '0待审 1通过 2驳回',
+  uid INT DEFAULT NULL,
+  ip VARCHAR(64) DEFAULT NULL,
+  parent_id INT DEFAULT NULL,
+  PRIMARY KEY (id),
+  KEY idx_message_parent (parent_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE t_diary (
+  id INT NOT NULL AUTO_INCREMENT,
+  title VARCHAR(100) NOT NULL,
+  content VARCHAR(2000) NOT NULL,
+  mood VARCHAR(20) DEFAULT NULL,
+  create_time CHAR(19) NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE t_notice (
+  id INT NOT NULL AUTO_INCREMENT,
+  title VARCHAR(100) NOT NULL,
+  content VARCHAR(2000) NOT NULL,
+  is_top CHAR(1) NOT NULL DEFAULT '0',
+  create_time CHAR(19) NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE t_login_log (
+  id INT NOT NULL AUTO_INCREMENT,
+  uid INT DEFAULT NULL,
+  username VARCHAR(32) DEFAULT NULL,
+  ip VARCHAR(64) DEFAULT NULL,
+  success CHAR(1) NOT NULL,
+  message VARCHAR(100) DEFAULT NULL,
+  login_time CHAR(19) NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE t_setting (
+  skey VARCHAR(64) NOT NULL,
+  svalue TEXT,
+  PRIMARY KEY (skey)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

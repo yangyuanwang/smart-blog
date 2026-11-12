@@ -23,6 +23,7 @@ public class User {
     @TableField("loginIp")
     private String loginIp;
     private String phone;
+    private String email;
     @TableField("loginCount")
     private Integer loginCount;
     private String img;

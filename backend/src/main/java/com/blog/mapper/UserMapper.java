@@ -2,11 +2,11 @@ package com.blog.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.blog.entity.User;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.Mapper;
 
+/**
+ * 用户 Mapper（历史明文修复逻辑已由登录期 BCrypt 升级替代）。
+ */
+@Mapper
 public interface UserMapper extends BaseMapper<User> {
-
-    @Update("UPDATE t_user SET password = #{encoded} WHERE password = '123'")
-    int encodePlainPasswords(@Param("encoded") String encoded);
 }

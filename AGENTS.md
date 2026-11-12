@@ -70,5 +70,5 @@ cd backend && mvn -q test ; cd ../frontend && pnpm typecheck && pnpm lint && pnp
 |---|---|
 | Nuxt（dev 与 SSR 容器） | 3000 |
 | Spring Boot API | 8080 |
-| MySQL | 3306（容器）/ 宿主机映射 33060 避免冲突 |
-| Redis | 6379（容器）/ 宿主机映射 36379 避免冲突 |
+| MySQL | 33061（容器映射，本机 3306/33060 已被宿主 MySQL 占用） |
+| Redis | 36379（容器映射） |

@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.imageio.ImageIO;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
@@ -104,7 +104,8 @@ public class AuthController {
         }
         try {
             checkCaptcha(code, session);
-            userService.register(username, password, nickname, phone);
+            // 旧页面注册不收集邮箱，走 API 注册链路才有邮箱找回
+            userService.register(username, password, nickname, null);
         } catch (BizException ex) {
             model.addAttribute("error", ex.getMessage());
             return "front/register";
@@ -144,8 +145,9 @@ public class AuthController {
     private String doLogin(String username, String password, String code, HttpServletRequest request,
                            HttpSession session, Model model, boolean admin) {
         try {
-            String right = checkCaptcha(code, session);
-            User user = userService.login(username, password, code, right, clientIp(request), admin);
+            // 验证码先行校验；口令匹配（含历史 MD5 自动升级）与角色校验在 UserService.login 内完成
+            checkCaptcha(code, session);
+            User user = userService.login(username, password, clientIp(request), admin);
             request.changeSessionId();
             session = request.getSession();
             session.setAttribute(UserService.LOGIN_USER, user);

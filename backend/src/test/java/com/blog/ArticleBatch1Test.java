@@ -16,7 +16,7 @@ public class ArticleBatch1Test {
 
     @Test
     public void applyStatusWritesBothFields() {
-        ArticleService service = new ArticleService(null, null, null, null, null, new Fmt());
+        ArticleService service = new ArticleService(null, null, null, null, null, null, new Fmt());
         Article article = new Article();
         service.applyStatus(article, "0");
         assertEquals("0", article.getPublishStatus());
@@ -31,7 +31,7 @@ public class ArticleBatch1Test {
 
     @Test
     public void illegalStatusDoesNotChangeFields() {
-        ArticleService service = new ArticleService(null, null, null, null, null, new Fmt());
+        ArticleService service = new ArticleService(null, null, null, null, null, null, new Fmt());
         Article article = new Article();
         article.setPublishStatus("1");
         article.setIsOpen("1");

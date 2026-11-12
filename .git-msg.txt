@@ -1,8 +1,8 @@
-feat(frontend): Nuxt3 foundation with Tailwind design system and dark-first tokens
+feat(frontend): full front pages - articles, article detail, guestbook, diaries, links, projects, about, auth, error
 
-- Nuxt 3.21 SSR + TypeScript + Tailwind v4 (@tailwindcss/vite)
-- Design tokens: dual light/dark CSS vars (accent cyan->purple gradient, glow hero utility), reduced-motion respected
-- Default layout: sticky nav with active states, mobile drawer, theme toggle, skip-link, footer
-- Homepage v1: typewriter hero, notices, latest articles (SSR), featured projects
-- useApi composable: Result unwrapping, token storage, 401 -> refresh-and-retry
-- routeRules proxy for /api and /uploads (covers browser + SSR internal fetch)
+- articles: search + category/tag filter + pagination + hot sidebar, sticky layout
+- article/[id]: SSR body + client Shiki dual-theme highlight, TOC scroll-spy, reading progress bar, like/view with session dedupe, prev/next, related, comments, AI summary card, BlogPosting JSON-LD
+- messages: threaded guestbook with audit feedback and own-delete
+- diaries: mood-tinted timeline; links: cards + apply form; projects: portfolio cards with tech badges
+- about from site settings; login/register/reset with JWT storage; error.vue with 404 state
+- verified in browser: dark/light x desktop/mobile quadrants

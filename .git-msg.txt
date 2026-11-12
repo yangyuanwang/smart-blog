@@ -1,0 +1,8 @@
+feat(frontend): Nuxt3 foundation with Tailwind design system and dark-first tokens
+
+- Nuxt 3.21 SSR + TypeScript + Tailwind v4 (@tailwindcss/vite)
+- Design tokens: dual light/dark CSS vars (accent cyan->purple gradient, glow hero utility), reduced-motion respected
+- Default layout: sticky nav with active states, mobile drawer, theme toggle, skip-link, footer
+- Homepage v1: typewriter hero, notices, latest articles (SSR), featured projects
+- useApi composable: Result unwrapping, token storage, 401 -> refresh-and-retry
+- routeRules proxy for /api and /uploads (covers browser + SSR internal fetch)

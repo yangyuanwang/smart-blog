@@ -21,6 +21,18 @@
     --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
+/* Consistent, more deliberate admin surfaces. */
+:root {
+    --admin-bg: #f4f3ef;
+    --admin-surface: #fffefa;
+    --admin-surface-muted: #f7f6f2;
+    --admin-side: #f8f7f3;
+    --admin-border: #e4e1d8;
+    --admin-primary: #315b4a;
+    --admin-primary-hover: #244536;
+    --admin-primary-soft: #e8eee9;
+}
+
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
@@ -737,6 +749,44 @@ body:has(> .auth) {
     margin: 0 0 24px;
     border-bottom: 1px solid var(--admin-border);
 }
+
+.topbar { background: rgba(255,254,250,.94); backdrop-filter: blur(14px); }
+.side { background: #f8f7f3; }
+.nav-item { border-radius: 10px; }
+.page-head { padding-bottom: 22px; margin-bottom: 24px; border-bottom: 1px solid var(--admin-border); }
+.page-head h1 { letter-spacing: -.035em; }
+.panel, .stat { border-radius: 16px; box-shadow: 0 8px 28px rgba(35,47,40,.035); }
+.panel { padding: 20px; }
+.stat { padding: 20px 22px; }
+.stat b { font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
+input[type="text"], input[type="password"], input[type="url"], input[type="number"], textarea, select { border-radius: 10px; background: #fff; }
+button, .button { border-radius: 9px; }
+.table-wrap { border-radius: 14px; box-shadow: 0 8px 28px rgba(35,47,40,.025); }
+th { letter-spacing: .015em; }
+tbody tr:hover td { background: #f8f8f4; }
+.auth { padding: 36px 30px 28px; border-radius: 18px; box-shadow: 0 24px 70px rgba(35,47,40,.08); }
+.profile-grid { display: grid; grid-template-columns: minmax(0,1.15fr) minmax(320px,.85fr); gap: 20px; align-items: start; }
+.profile-card { gap: 18px !important; padding: 26px !important; }
+.profile-card h2 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
+.profile-card-head { display: flex; align-items: center; gap: 14px; padding-bottom: 20px; border-bottom: 1px solid var(--admin-border); }
+.profile-card-head p { margin: 4px 0 0; color: var(--admin-text-muted); font-size: 13px; }
+.profile-symbol { display: grid; place-items: center; width: 42px; height: 42px; flex: none; border-radius: 13px; background: var(--admin-primary-soft); color: var(--admin-primary); font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+.profile-avatar-row { display: flex; align-items: center; gap: 14px; padding: 2px 0 4px; }
+.profile-avatar-row > div { display: grid; gap: 3px; }
+.profile-avatar-row strong { font-size: 15px; }
+.profile-avatar-row div span { color: var(--admin-text-muted); font-size: 12px; }
+.avatar-lg { width: 60px; height: 60px; border: 3px solid #fff; box-shadow: 0 0 0 1px var(--admin-border); }
+.avatar-placeholder { display: grid; place-items: center; background: var(--admin-primary-soft); color: var(--admin-primary); font-size: 20px; font-weight: 700; }
+.profile-card > label { gap: 8px; }
+.profile-card > label input { height: 44px; }
+.profile-upload { position: relative; min-height: 68px; display: grid !important; grid-template-columns: 1fr auto; align-content: center; gap: 2px 12px !important; padding: 12px 14px !important; border-style: dashed; background: #faf9f5; }
+.profile-upload > span { color: var(--admin-text); font-size: 13px; font-weight: 600; }
+.profile-upload small { color: var(--admin-text-muted); font-size: 12px; }
+.profile-upload input { grid-column: 2; grid-row: 1 / span 2; width: min(220px,100%); border: 0; padding: 0; background: transparent; font-size: 12px; }
+.profile-card > button { display: flex; justify-content: space-between; align-items: center; min-height: 44px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--admin-primary); color: white; font-weight: 600; cursor: pointer; }
+.profile-card > button:hover { background: var(--admin-primary-hover); }
+@media (max-width: 1100px) { .profile-grid { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .profile-card { padding: 20px !important; } .profile-upload { grid-template-columns: 1fr; } .profile-upload input { grid-column: 1; grid-row: auto; width: 100%; } }
 button.line-tab {
     height: auto;
     margin-bottom: -1px;

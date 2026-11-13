@@ -93,6 +93,21 @@ async function removeTag (tag: Tag) {
 }
 
 useSeoMeta({ title: '栏目与标签' })
+
+// 按栏目分组标签：归属关系一目了然；无栏目（cid 为空）的归入「未分组」
+const groupedTags = computed(() => {
+  const list = tags.value ?? []
+  const groups = (categories.value ?? []).map(category => ({
+    cid: category.cid,
+    name: category.cname,
+    tags: list.filter(tag => tag.cid === category.cid)
+  }))
+  const orphans = list.filter(tag => !tag.cid || !groups.some(group => group.cid === tag.cid))
+  if (orphans.length) {
+    groups.push({ cid: null, name: '未分组', tags: orphans })
+  }
+  return groups
+})
 </script>
 
 <template>
@@ -140,25 +155,40 @@ useSeoMeta({ title: '栏目与标签' })
           </select>
           <button type="submit" class="px-3 py-2 rounded-lg text-sm border border-app hover:bg-surface-2">添加</button>
         </form>
-        <ul class="mt-4 flex flex-wrap gap-2">
-          <li v-for="tag in tags ?? []" :key="tag.tid">
-            <template v-if="editingTag?.tid === tag.tid">
-              <div class="flex gap-1 items-center rounded-full border border-app px-3 py-1">
-                <input v-model="editingTag.tname" maxlength="30" class="w-24 rounded border border-app bg-app px-1 text-xs">
-                <select v-model.number="editingTag.cid" class="rounded border border-app bg-app text-xs">
-                  <option v-for="category in categories ?? []" :key="category.cid" :value="category.cid">{{ category.cname }}</option>
-                </select>
-                <button type="button" class="text-xs" @click="updateTag">存</button>
-                <button type="button" class="text-xs text-muted" @click="editingTag = null">取消</button>
-              </div>
-            </template>
-            <span v-else class="inline-flex items-center gap-1.5 rounded-full border border-app px-3 py-1 text-sm">
-              {{ tag.tname }}
-              <button type="button" class="text-xs text-muted hover:text-main" @click="editingTag = { tid: tag.tid, tname: tag.tname, cid: tag.cid }">✏️</button>
-              <button type="button" class="text-xs text-muted hover:text-main" style="color: var(--color-danger)" @click="removeTag(tag)">×</button>
-            </span>
-          </li>
-        </ul>
+        <!-- 按栏目分组的标签：归属一目了然 -->
+        <div class="mt-4 space-y-4">
+          <section
+            v-for="group in groupedTags"
+            :key="group.cid ?? 0"
+            :aria-label="`栏目 ${group.name} 的标签`"
+            class="rounded-lg border border-app p-3"
+          >
+            <div class="flex items-baseline justify-between">
+              <h3 class="text-sm font-medium">{{ group.name }}</h3>
+              <span class="text-xs text-muted">{{ group.tags.length }} 个标签</span>
+            </div>
+            <ul class="mt-2 flex flex-wrap gap-2">
+              <li v-for="tag in group.tags" :key="tag.tid">
+                <template v-if="editingTag?.tid === tag.tid">
+                  <div class="flex gap-1 items-center rounded-full border border-app px-3 py-1">
+                    <input v-model="editingTag.tname" maxlength="30" class="w-24 rounded border border-app bg-app px-1 text-xs">
+                    <select v-model.number="editingTag.cid" class="rounded border border-app bg-app text-xs">
+                      <option v-for="category in categories ?? []" :key="category.cid" :value="category.cid">{{ category.cname }}</option>
+                    </select>
+                    <button type="button" class="text-xs" @click="updateTag">存</button>
+                    <button type="button" class="text-xs text-muted" @click="editingTag = null">取消</button>
+                  </div>
+                </template>
+                <span v-else class="inline-flex items-center gap-1.5 rounded-full border border-app px-3 py-1 text-sm">
+                  {{ tag.tname }}
+                  <button type="button" class="text-xs text-muted hover:text-main" aria-label="编辑标签" @click="editingTag = { tid: tag.tid, tname: tag.tname, cid: tag.cid }">✏️</button>
+                  <button type="button" class="text-xs text-muted hover:text-main" style="color: var(--color-danger)" aria-label="删除标签" @click="removeTag(tag)">×</button>
+                </span>
+              </li>
+              <li v-if="!group.tags.length" class="text-xs text-muted">该栏目下还没有标签</li>
+            </ul>
+          </section>
+        </div>
       </section>
     </div>
   </div>

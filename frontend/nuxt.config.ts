@@ -29,6 +29,8 @@ export default defineNuxtConfig({
   // API 与上传目录代理：routeRules 同时覆盖浏览器请求与 SSR 内部 $fetch
   // （目标主机可用 NUXT_PROXY_TARGET 覆盖，容器化部署时指向 backend 服务名）
   routeRules: {
+    // 管理后台纯客户端渲染：SSR 阶段拿不到 localStorage 令牌，管理接口会 401
+    '/admin/**': { ssr: false },
     '/api/**': { proxy: `${process.env.NUXT_PROXY_TARGET || 'http://localhost:8080'}/api/**` },
     '/uploads/**': { proxy: `${process.env.NUXT_PROXY_TARGET || 'http://localhost:8080'}/uploads/**` }
   },

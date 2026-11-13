@@ -79,8 +79,9 @@ onMounted(async () => {
   }
 })
 
-// 阅读进度条
+// 阅读进度条 + 浮动工具条显隐
 const progress = ref(0)
+const dockVisible = ref(false)
 function onScroll () {
   const el = document.getElementById('article-body')
   if (!el) {
@@ -90,6 +91,7 @@ function onScroll () {
   const total = el.offsetHeight
   const current = window.scrollY - start
   progress.value = Math.min(100, Math.max(0, (current / Math.max(total, 1)) * 100))
+  dockVisible.value = window.scrollY > 420
 }
 onMounted(() => {
   window.addEventListener('scroll', onScroll, { passive: true })
@@ -156,18 +158,6 @@ async function like () {
 const pageTitle = computed(() => article.value.seoTitle || article.value.title)
 const origin = useRequestURL().origin
 
-// 信纸类型：按栏目映射——技术栏目方格纸、生活栏目横线信纸、其余点阵纸
-const paperType = computed(() => {
-  const name = article.value.categoryName ?? ''
-  if (['编程', '数据库'].includes(name)) {
-    return 'grid-paper'
-  }
-  if (['旅游', '运动', '购物'].includes(name)) {
-    return 'ruled-paper'
-  }
-  return 'dot-paper'
-})
-
 // 文章信息卡：正文字数（从渲染 HTML 剥离标签统计）
 const wordCount = computed(() =>
   (bodyHtml.value || '').replace(/<[^>]+>/g, '').replace(/\s/g, '').length
@@ -210,6 +200,10 @@ useHead({
 function fmtDate (value?: string) {
   return value?.slice(0, 10) ?? ''
 }
+
+function scrollToTop () {
+  window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+}
 </script>
 
 <template>
@@ -225,33 +219,40 @@ function fmtDate (value?: string) {
       <article>
         <!-- 封面 Hero：有封面时大图 + 渐变遮罩；无封面时渐变横幅 -->
         <header class="relative rounded-2xl overflow-hidden border border-app">
-          <div class="h-56 sm:h-72 bg-surface-2 overflow-hidden">
+          <div class="h-64 sm:h-96 relative overflow-hidden">
             <img
               v-if="article.logo"
               :src="article.logo"
               :alt="`${article.title} 封面`"
-              class="w-full h-full object-cover"
+              class="w-full h-full object-cover scale-105 transition-transform duration-[1.2s] group-hover:scale-100"
             >
             <div
               v-else
-              class="w-full h-full grid place-items-center"
-              :style="{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 22%, var(--surface)), color-mix(in srgb, var(--color-accent-2) 26%, var(--surface)))' }"
+              class="w-full h-full"
+              :style="{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 30%, #0b0e14), color-mix(in srgb, var(--color-accent-2) 34%, #0b0e14))' }"
             >
-              <span class="font-serif text-6xl font-bold text-white/85 drop-shadow select-none" aria-hidden="true">{{ article.title.slice(0, 2) }}</span>
+              <span class="absolute inset-0 grid place-items-center font-serif text-8xl font-bold text-white/25 select-none" aria-hidden="true">{{ article.title.slice(0, 2) }}</span>
             </div>
-          </div>
-          <!-- 底部信息条：分类 + 标题 + 元数据 -->
-          <div class="bg-surface p-5 sm:p-6">
-            <div class="flex flex-wrap items-center gap-2 text-xs text-muted">
+            <!-- 渐变遮罩：标题与元数据压在图上，杂志式排版 -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/5" aria-hidden="true" />
+            <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
               <span
                 v-if="article.categoryName"
-                class="px-2 py-0.5 rounded-md bg-surface-2"
+                class="inline-block px-2.5 py-1 rounded-md text-xs font-medium text-white bg-white/20 backdrop-blur-sm"
               >{{ article.categoryName }}</span>
-              <time>发布于 {{ fmtDate(article.createTime) }}</time>
-              <span v-if="article.readingMinutes">阅读约 {{ article.readingMinutes }} 分钟</span>
-              <span>{{ views }} 次浏览</span>
+              <h1 class="mt-3 font-serif text-3xl sm:text-5xl font-bold leading-tight text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.45)]">
+                {{ article.title }}
+              </h1>
+              <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-white/85">
+                <time>发布于 {{ fmtDate(article.createTime) }}</time>
+                <span v-if="article.readingMinutes" class="inline-flex items-center gap-1.5">
+                  <span aria-hidden="true">⏱</span>约 {{ article.readingMinutes }} 分钟
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <span aria-hidden="true">👁</span>{{ views }} 次浏览
+                </span>
+              </div>
             </div>
-            <h1 class="mt-3 font-serif text-3xl sm:text-4xl font-bold leading-tight">{{ article.title }}</h1>
           </div>
         </header>
 
@@ -265,23 +266,9 @@ function fmtDate (value?: string) {
           <p class="text-sm text-muted leading-relaxed">{{ article.aiSummary }}</p>
         </aside>
 
-        <!-- 操作栏：点赞 + 分享提示 -->
-        <div class="mt-6 flex items-center gap-3 pb-6 border-b border-app">
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-app bg-surface hover:bg-surface-2 focus-visible:ring-2 ring-app transition-colors text-sm"
-            :aria-pressed="liked"
-            @click="like"
-          >
-            <span aria-hidden="true">{{ liked ? '💗' : '🤍' }}</span>
-            <span>{{ likes }}</span>
-          </button>
-          <p v-if="likeFeedback" class="text-sm text-muted" role="status">{{ likeFeedback }}</p>
-          <span class="ml-auto text-xs text-muted">SSR 直出 · Shiki 高亮</span>
-        </div>
-
-        <!-- 正文：信纸容器——与页面背景明确区分，按栏目配不同纸纹 -->
-        <div class="paper paper-base mt-8 rounded-2xl border border-app px-6 py-8 sm:px-10" :class="paperType">
+        <!-- 正文：干净纸面 + 顶部渐变条 + 首字下沉的编辑排版 -->
+        <div class="paper paper-base mt-8 rounded-2xl border border-app px-6 py-8 sm:px-12 sm:py-10 overflow-hidden">
+          <div class="paper-accent" aria-hidden="true" />
           <div
             v-if="bodyHtml.trim()"
             id="article-body"
@@ -382,38 +369,63 @@ function fmtDate (value?: string) {
         <CalendarCard :marked="calendarMarks" />
       </aside>
     </div>
+
+    <!-- 浮动阅读工具条：滚过首屏后出现（点赞 / 评论 / 回顶部） -->
+    <div
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 transition-all duration-300"
+      :class="dockVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none'"
+    >
+      <div class="flex items-center gap-1 rounded-full border border-app bg-surface/90 backdrop-blur px-2 py-1.5 shadow-xl">
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full hover:bg-surface-2 focus-visible:ring-2 ring-app transition-colors text-sm"
+          :aria-pressed="liked"
+          :aria-label="liked ? '取消点赞' : '点赞'"
+          @click="like"
+        >
+          <span aria-hidden="true">{{ liked ? '💗' : '🤍' }}</span>
+          <span class="tabular-nums">{{ likes }}</span>
+        </button>
+        <span class="w-px h-5 bg-[color:var(--border)]" aria-hidden="true" />
+        <a
+          href="#comments"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full hover:bg-surface-2 focus-visible:ring-2 ring-app transition-colors text-sm"
+          :aria-label="`跳到评论（${data?.comments?.length ?? 0} 条）`"
+        >
+          <span aria-hidden="true">💬</span>
+          <span class="tabular-nums">{{ data?.comments?.length ?? 0 }}</span>
+        </a>
+        <span class="w-px h-5 bg-[color:var(--border)]" aria-hidden="true" />
+        <button
+          type="button"
+          class="px-3.5 py-2 rounded-full hover:bg-surface-2 focus-visible:ring-2 ring-app transition-colors text-sm"
+          aria-label="回到顶部"
+          @click="scrollToTop"
+        >
+          <span aria-hidden="true">↑</span>
+        </button>
+      </div>
+      <p v-if="likeFeedback" class="mt-2 text-center text-xs text-muted" role="status">{{ likeFeedback }}</p>
+    </div>
   </div>
 </template>
 
 <style>
-/* 信纸容器：让文章成为页面上的"一张纸"，纸纹按栏目切换且暗色降淡 */
-:root {
-  --paper-line: rgba(63, 92, 78, 0.12);
-}
-.dark {
-  --paper-line: rgba(255, 255, 255, 0.05);
-}
+/* 纸面容器：干净高级——顶部品牌渐变条 + 柔和悬浮阴影，无杂纹理 */
 .paper-base {
+  position: relative;
   background-color: var(--surface);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 12px 32px rgba(0, 0, 0, 0.05);
 }
-.grid-paper {
-  background-image:
-    linear-gradient(var(--paper-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
-.ruled-paper {
-  background-image: repeating-linear-gradient(
-    transparent,
-    transparent calc(1.9em - 1px),
-    var(--paper-line) calc(1.9em - 1px),
-    var(--paper-line) 1.9em
-  );
-}
-.dot-paper {
-  background-image: radial-gradient(var(--paper-line) 1px, transparent 1.5px);
-  background-size: 22px 22px;
+.paper-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 16px 16px 0 0;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-2));
+  opacity: 0.85;
 }
 
 /* 正文排版：编辑感节奏 + 亮暗统一适配 */
@@ -422,6 +434,19 @@ function fmtDate (value?: string) {
   font-size: 1rem;
   overflow-wrap: break-word;
   letter-spacing: 0.01em;
+}
+/* 首字下沉：衬线 + 品牌渐变，编辑刊头感 */
+.article-body > p:first-of-type::first-letter {
+  font-family: var(--font-serif);
+  font-size: 3em;
+  line-height: 1;
+  font-weight: 700;
+  margin-right: 0.1em;
+  float: left;
+  background: linear-gradient(120deg, var(--color-accent), var(--color-accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 .article-body h1, .article-body h2, .article-body h3, .article-body h4 {
   font-family: var(--font-serif);
@@ -445,12 +470,24 @@ function fmtDate (value?: string) {
 .article-body ol { list-style: decimal; }
 .article-body li::marker { color: var(--color-accent-2); }
 .article-body blockquote {
-  margin: 1.4em 0;
-  padding: 0.8em 1.2em;
+  position: relative;
+  margin: 1.6em 0;
+  padding: 1em 1.4em 1em 3em;
   border-left: 3px solid var(--color-accent-2);
   background: var(--surface-2);
-  border-radius: 0 10px 10px 0;
+  border-radius: 0 12px 12px 0;
   color: var(--text-muted);
+}
+.article-body blockquote::before {
+  content: "\201C";
+  position: absolute;
+  left: 0.6em;
+  top: -0.1em;
+  font-family: var(--font-serif);
+  font-size: 2.6em;
+  line-height: 1;
+  color: var(--color-accent-2);
+  opacity: 0.4;
 }
 .article-body blockquote p { margin: 0.3em 0; }
 .article-body pre {

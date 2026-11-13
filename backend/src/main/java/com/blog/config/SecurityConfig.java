@@ -65,7 +65,11 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsSource()))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                // 无状态：API 认证完全依赖 JWT 过滤器，禁止 Spring Security 把
+                // SecurityContext 持久化进会话（否则历史管理员上下文会随 Cookie 复活，
+                // 垃圾令牌也能拿到管理员身份）。旧 Thymeleaf 的会话登录走 Servlet
+                // session 直存，不受此策略影响。
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // 认证接口：匿名可用
                         .requestMatchers("/api/v1/auth/**").permitAll()

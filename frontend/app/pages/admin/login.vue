@@ -54,5 +54,11 @@ async function submit () {
 {{ submitting ? '登录中…' : '登录' }}
 </button>
     </form>
+    <p class="mt-4 text-center text-xs text-muted leading-relaxed">
+      后台仅限管理员进入；游客请从前台右上角
+      <NuxtLink to="/login" class="underline hover:text-main">登录</NuxtLink>
+      或
+      <NuxtLink to="/register" class="underline hover:text-main">注册</NuxtLink>
+    </p>
   </div>
 </template>

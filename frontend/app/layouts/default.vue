@@ -91,6 +91,7 @@ const siteName = computed(() => '智序 SMART WORKSPACE')
             <span aria-hidden="true">{{ colorMode.value === 'dark' ? '🌙' : '☀️' }}</span>
           </button>
           <NuxtLink
+            v-if="user?.admin"
             to="/admin"
             class="hidden sm:inline-flex px-2.5 py-1.5 rounded-lg text-sm hover:bg-surface-2 focus-visible:ring-2 ring-app"
           >后台</NuxtLink>
@@ -116,7 +117,7 @@ const siteName = computed(() => '智序 SMART WORKSPACE')
               active-class="bg-surface-2 font-medium"
             >{{ link.label }}</NuxtLink>
           </li>
-          <li>
+          <li v-if="user?.admin">
             <NuxtLink to="/admin" class="block px-3 py-2 rounded-lg hover:bg-surface-2">后台</NuxtLink>
           </li>
         </ul>

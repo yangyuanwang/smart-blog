@@ -100,6 +100,9 @@ const { data: hotData, pending: hotPending } = await useAsyncData('hotnews', () 
 }>('/hotnews'), { server: true, default: () => ({ code: 0, data: [] }) })
 const hotItems = computed(() => hotData.value?.data ?? [])
 
+// 管理入口仅管理员可见（游客/普通访客不显示后台与控制台）；登录态由布局层统一拉取
+const { user: session } = useAuthSession()
+
 function fmtDate (value: string) {
   return value?.slice(0, 10) ?? ''
 }
@@ -160,6 +163,7 @@ useSeoMeta({
               </div>
             </div>
             <NuxtLink
+              v-if="session?.admin"
               to="/admin"
               class="mt-4 block text-center text-xs text-muted hover:text-main focus-visible:ring-2 ring-app rounded py-1"
             >进入控制台 →</NuxtLink>

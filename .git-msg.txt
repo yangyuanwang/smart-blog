@@ -1,0 +1,8 @@
+feat(frontend): design pass - richer home hero, cover cards, article hero, legacy data cleanup
+
+- home: two-column hero (typewriter text + tech badges | live stats panel from new /api/v1/home stats field)
+- article card: cover image (or gradient title placeholder) with hover zoom, featured variant
+- articles list: full-width featured first card on page 1, zero-count tags filtered from sidebar
+- article detail: cover hero banner (image or gradient placeholder), empty-body graceful state, editorial prose styles (accent h2 border, styled code/inline-code, hr, table, markers)
+- data cleanup: removed empty legacy article (rowboat 18-char whitespace) and smoke/acceptance test articles; nulled broken legacy logo paths (old blog\upload backslash refs)
+- ops: restart unless-stopped on mysql/redis (docker daemon flaps were dropping them); flattened nested uploads in backend volume

@@ -7,6 +7,7 @@ services:
     profiles: [dev, full]
     image: mysql:8.0
     container_name: smart-blog-mysql
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-blog123456}
       MYSQL_DATABASE: blog
@@ -26,6 +27,7 @@ services:
     profiles: [dev, full]
     image: redis:7-alpine
     container_name: smart-blog-redis
+    restart: unless-stopped
     ports:
       - "36379:6379"
     volumes:

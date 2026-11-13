@@ -200,18 +200,35 @@ function fmtDate (value?: string) {
 
     <div class="grid gap-8 lg:grid-cols-[1fr_220px]">
       <article>
-        <header>
-          <div class="flex flex-wrap items-center gap-2 text-xs text-muted">
-            <NuxtLink
-              v-if="article.categoryName"
-              :to="{ path: '/articles', query: { cid: undefined } }"
-              class="px-2 py-0.5 rounded-md bg-surface-2"
-            >{{ article.categoryName }}</NuxtLink>
-            <time>发布于 {{ fmtDate(article.createTime) }}</time>
-            <span v-if="article.readingMinutes">阅读约 {{ article.readingMinutes }} 分钟</span>
-            <span>{{ views }} 次浏览</span>
+        <!-- 封面 Hero：有封面时大图 + 渐变遮罩；无封面时渐变横幅 -->
+        <header class="relative rounded-2xl overflow-hidden border border-app">
+          <div class="h-56 sm:h-72 bg-surface-2 overflow-hidden">
+            <img
+              v-if="article.logo"
+              :src="article.logo"
+              :alt="`${article.title} 封面`"
+              class="w-full h-full object-cover"
+            >
+            <div
+              v-else
+              class="w-full h-full glow-hero bg-surface-2 grid place-items-center"
+            >
+              <span class="font-serif text-6xl gradient-text select-none" aria-hidden="true">{{ article.title.slice(0, 2) }}</span>
+            </div>
           </div>
-          <h1 class="mt-3 font-serif text-3xl sm:text-4xl font-bold leading-tight">{{ article.title }}</h1>
+          <!-- 底部信息条：分类 + 标题 + 元数据 -->
+          <div class="bg-surface p-5 sm:p-6">
+            <div class="flex flex-wrap items-center gap-2 text-xs text-muted">
+              <span
+                v-if="article.categoryName"
+                class="px-2 py-0.5 rounded-md bg-surface-2"
+              >{{ article.categoryName }}</span>
+              <time>发布于 {{ fmtDate(article.createTime) }}</time>
+              <span v-if="article.readingMinutes">阅读约 {{ article.readingMinutes }} 分钟</span>
+              <span>{{ views }} 次浏览</span>
+            </div>
+            <h1 class="mt-3 font-serif text-3xl sm:text-4xl font-bold leading-tight">{{ article.title }}</h1>
+          </div>
         </header>
 
         <!-- AI 摘要卡 -->
@@ -224,8 +241,8 @@ function fmtDate (value?: string) {
           <p class="text-sm text-muted leading-relaxed">{{ article.aiSummary }}</p>
         </aside>
 
-        <!-- 操作栏 -->
-        <div class="mt-6 flex items-center gap-3">
+        <!-- 操作栏：点赞 + 分享提示 -->
+        <div class="mt-6 flex items-center gap-3 pb-6 border-b border-app">
           <button
             type="button"
             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-app bg-surface hover:bg-surface-2 focus-visible:ring-2 ring-app transition-colors text-sm"
@@ -236,15 +253,20 @@ function fmtDate (value?: string) {
             <span>{{ likes }}</span>
           </button>
           <p v-if="likeFeedback" class="text-sm text-muted" role="status">{{ likeFeedback }}</p>
+          <span class="ml-auto text-xs text-muted">SSR 直出 · Shiki 高亮</span>
         </div>
 
-        <!-- 正文（SSR 直出 + 客户端 Shiki 增强） -->
+        <!-- 正文（SSR 直出 + 客户端 Shiki 增强）；空正文给优雅态 -->
         <div
+          v-if="bodyHtml.trim()"
           id="article-body"
           class="article-body mt-8"
           :class="{ 'is-highlighted': highlighted }"
           v-html="bodyHtml"
         />
+        <div v-else class="mt-8 rounded-xl border border-app bg-surface px-4 py-12 text-center text-muted">
+          本文暂无正文内容
+        </div>
 
         <!-- 上一篇 / 下一篇 -->
         <nav class="mt-10 grid gap-3 sm:grid-cols-2" aria-label="上下篇">
@@ -300,57 +322,81 @@ function fmtDate (value?: string) {
 </template>
 
 <style>
-/* 正文排版：标题/代码/引用在亮暗主题下统一适配 */
+/* 正文排版：编辑感节奏 + 亮暗统一适配 */
 .article-body {
-  line-height: 1.8;
-  font-size: 0.95rem;
+  line-height: 1.9;
+  font-size: 1rem;
   overflow-wrap: break-word;
+  letter-spacing: 0.01em;
 }
 .article-body h1, .article-body h2, .article-body h3, .article-body h4 {
   font-family: var(--font-serif);
   font-weight: 700;
-  margin: 1.6em 0 0.6em;
+  margin: 2em 0 0.7em;
   scroll-margin-top: 5rem;
 }
 .article-body h1 { font-size: 1.6rem; }
-.article-body h2 { font-size: 1.35rem; }
+.article-body h2 {
+  font-size: 1.4rem;
+  padding-left: 0.75rem;
+  border-left: 4px solid var(--color-accent);
+}
 .article-body h3 { font-size: 1.15rem; }
-.article-body p { margin: 0.8em 0; }
+.article-body h2 + p, .article-body h3 + p { margin-top: 0.4em; }
+.article-body p { margin: 0.9em 0; }
 .article-body a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 3px; }
-.article-body ul, .article-body ol { margin: 0.8em 0; padding-left: 1.6em; }
+.article-body ul, .article-body ol { margin: 0.9em 0; padding-left: 1.6em; }
+.article-body li { margin: 0.35em 0; }
 .article-body ul { list-style: disc; }
 .article-body ol { list-style: decimal; }
+.article-body li::marker { color: var(--color-accent-2); }
 .article-body blockquote {
-  margin: 1.2em 0;
-  padding: 0.4em 1em;
+  margin: 1.4em 0;
+  padding: 0.8em 1.2em;
   border-left: 3px solid var(--color-accent-2);
   background: var(--surface-2);
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 10px 10px 0;
   color: var(--text-muted);
 }
+.article-body blockquote p { margin: 0.3em 0; }
 .article-body pre {
-  margin: 1.2em 0;
-  padding: 1rem;
+  position: relative;
+  margin: 1.4em 0;
+  padding: 1rem 1.1rem;
   border-radius: 12px;
   overflow-x: auto;
   background: var(--surface-2);
   border: 1px solid var(--border);
   font-family: var(--font-mono);
   font-size: 0.85rem;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 .article-body :not(pre) > code {
   font-family: var(--font-mono);
   font-size: 0.85em;
-  padding: 0.15em 0.4em;
+  padding: 0.15em 0.45em;
   border-radius: 6px;
   background: var(--surface-2);
   border: 1px solid var(--border);
+  color: var(--color-accent-2);
 }
-.article-body img { max-width: 100%; border-radius: 12px; margin: 1.2em 0; }
-.article-body table { width: 100%; border-collapse: collapse; margin: 1.2em 0; font-size: 0.9rem; }
-.article-body th, .article-body td { border: 1px solid var(--border); padding: 0.5em 0.8em; text-align: left; }
-.article-body th { background: var(--surface-2); }
+.article-body hr {
+  border: 0;
+  height: 1px;
+  margin: 2.2em auto;
+  width: 60%;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+.article-body img {
+  max-width: 100%;
+  border-radius: 12px;
+  margin: 1.4em auto;
+  border: 1px solid var(--border);
+}
+.article-body table { width: 100%; border-collapse: collapse; margin: 1.4em 0; font-size: 0.9rem; border-radius: 10px; overflow: hidden; }
+.article-body th, .article-body td { border: 1px solid var(--border); padding: 0.55em 0.9em; text-align: left; }
+.article-body th { background: var(--surface-2); font-weight: 600; }
+.article-body strong { color: var(--text); font-weight: 700; }
 /* Shiki 双主题：跟随暗色 class 切换 */
 .article-body .shiki, .article-body .shiki span {
   background-color: transparent !important;

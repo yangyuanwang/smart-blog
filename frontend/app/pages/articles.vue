@@ -129,11 +129,17 @@ useSeoMeta({
       <div v-else-if="!data?.list?.length" class="mt-6 rounded-xl border border-app bg-surface px-4 py-14 text-center text-muted">
         没有匹配的文章，换个关键词试试
       </div>
-      <ul v-else class="mt-6 grid gap-4 sm:grid-cols-2">
-        <li v-for="article in data.list" :key="article.aid">
-          <ArticleCard :article="article" />
-        </li>
-      </ul>
+      <!-- 首篇大卡（有封面时横向通栏）+ 其余网格 -->
+      <template v-else>
+        <div v-if="page === 1 && !q && !cid && !tag && data.list[0]" class="mt-6">
+          <ArticleCard :article="data.list[0]" featured />
+        </div>
+        <ul class="mt-6 grid gap-4 sm:grid-cols-2">
+          <li v-for="article in (page === 1 && !q && !cid && !tag ? data.list.slice(1) : data.list)" :key="article.aid">
+            <ArticleCard :article="article" />
+          </li>
+        </ul>
+      </template>
 
       <!-- 分页 -->
       <nav v-if="totalPages > 1" class="mt-8 flex items-center justify-center gap-2" aria-label="分页">
@@ -179,7 +185,7 @@ useSeoMeta({
         <h2 class="font-serif font-semibold">标签</h2>
         <div class="mt-3 flex flex-wrap gap-2 text-sm">
           <NuxtLink
-            v-for="item in sidebar?.tags ?? []"
+            v-for="item in (sidebar?.tags ?? []).filter(t => t.articleCount > 0)"
             :key="item.tid"
             :to="{ path: '/articles', query: { tag: item.tname } }"
             class="px-2.5 py-1 rounded-full border border-app hover:bg-surface-2 focus-visible:ring-2 ring-app"

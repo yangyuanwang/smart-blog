@@ -67,7 +67,7 @@ public class PublicApiController {
     /**
      * 首页聚合数据。
      *
-     * @return 最新文章、精选作品、公告、日记、站点信息
+     * @return 最新文章、精选作品、公告、日记、站点信息与内容统计
      */
     @Operation(summary = "首页聚合")
     @GetMapping("/api/v1/home")
@@ -78,6 +78,13 @@ public class PublicApiController {
         data.put("notices", contentService.topNotices(3));
         data.put("diaries", contentService.recentDiaries(3));
         data.put("site", publicSite());
+        // 首页 Hero 的实时统计（文章数 / 已发布 / 总访问 / 标签数）
+        Map<String, Object> stats = new HashMap<String, Object>();
+        stats.put("articles", articleService.publicCount());
+        stats.put("visits", articleService.visits());
+        stats.put("tags", contentService.tags().stream().filter(tag -> tag.getTid() != null).count());
+        stats.put("projects", projectMapper.selectCount(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Project>().eq("status", "1")));
+        data.put("stats", stats);
         return Result.ok(data);
     }
 

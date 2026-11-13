@@ -155,6 +155,18 @@ async function like () {
 
 const pageTitle = computed(() => article.value.seoTitle || article.value.title)
 const origin = useRequestURL().origin
+
+// 信纸类型：按栏目映射——技术栏目方格纸、生活栏目横线信纸、其余点阵纸
+const paperType = computed(() => {
+  const name = article.value.categoryName ?? ''
+  if (['编程', '数据库'].includes(name)) {
+    return 'grid-paper'
+  }
+  if (['旅游', '运动', '购物'].includes(name)) {
+    return 'ruled-paper'
+  }
+  return 'dot-paper'
+})
 useSeoMeta({
   title: pageTitle.value,
   description: article.value.seoDesc || article.value.digest,
@@ -256,16 +268,18 @@ function fmtDate (value?: string) {
           <span class="ml-auto text-xs text-muted">SSR 直出 · Shiki 高亮</span>
         </div>
 
-        <!-- 正文（SSR 直出 + 客户端 Shiki 增强）；空正文给优雅态 -->
-        <div
-          v-if="bodyHtml.trim()"
-          id="article-body"
-          class="article-body mt-8"
-          :class="{ 'is-highlighted': highlighted }"
-          v-html="bodyHtml"
-        />
-        <div v-else class="mt-8 rounded-xl border border-app bg-surface px-4 py-12 text-center text-muted">
-          本文暂无正文内容
+        <!-- 正文：信纸容器——与页面背景明确区分，按栏目配不同纸纹 -->
+        <div class="paper paper-base mt-8 rounded-2xl border border-app px-6 py-8 sm:px-10" :class="paperType">
+          <div
+            v-if="bodyHtml.trim()"
+            id="article-body"
+            class="article-body"
+            :class="{ 'is-highlighted': highlighted }"
+            v-html="bodyHtml"
+          />
+          <div v-else class="py-12 text-center text-muted">
+            本文暂无正文内容
+          </div>
         </div>
 
         <!-- 上一篇 / 下一篇 -->
@@ -322,6 +336,36 @@ function fmtDate (value?: string) {
 </template>
 
 <style>
+/* 信纸容器：让文章成为页面上的"一张纸"，纸纹按栏目切换且暗色降淡 */
+:root {
+  --paper-line: rgba(63, 92, 78, 0.12);
+}
+.dark {
+  --paper-line: rgba(255, 255, 255, 0.05);
+}
+.paper-base {
+  background-color: var(--surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+.grid-paper {
+  background-image:
+    linear-gradient(var(--paper-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.ruled-paper {
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent calc(1.9em - 1px),
+    var(--paper-line) calc(1.9em - 1px),
+    var(--paper-line) 1.9em
+  );
+}
+.dot-paper {
+  background-image: radial-gradient(var(--paper-line) 1px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+
 /* 正文排版：编辑感节奏 + 亮暗统一适配 */
 .article-body {
   line-height: 1.9;

@@ -1,5 +1,0 @@
-feat: guestbook UX rework, calendar + hot news widgets, 10 backdated tech articles
-
-- guestbook: publish-as-you-go (no pre-audit), optional nickname with auto guest_xxxx generation; spam protection stays on Redis rate limit + URL/keyword filter + admin delete
-- home: CalendarCard (month grid, today gradient highlight, publish-date markers) + hot news panel via Nitro route with in-memory 30min cache and multi-source fallback (vvhan -> 60s API -> stale cache -> empty); degrades gracefully when all sources unreachable
-- content: 10 tech articles seeded via admin API with code blocks, ASCII design diagrams and tables, create_time backdated 2021-03 to 2026-11 via SQL (Java collections, MySQL index pitfalls, Redis structures, Result contract design with layer diagram, Docker Compose dev env, Session->JWT evolution, idempotency, cache 3 problems, Nuxt3 SSR pitfalls, view-count buffer flush)

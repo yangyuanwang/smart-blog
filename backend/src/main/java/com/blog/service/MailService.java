@@ -12,9 +12,12 @@ import org.springframework.stereotype.Service;
 
 import com.blog.common.BizException;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
- * 邮件服务：仅用于找回密码验证码。SMTP 未配置（host 为空）时所有方法优雅降级。
+ * 邮件服务：注册验证码与找回密码验证码。SMTP 未配置（host 为空）时所有方法优雅降级。
  */
+@Slf4j
 @Service
 @ConditionalOnProperty(prefix = "spring.mail", name = "host")
 public class MailService {
@@ -72,6 +75,7 @@ public class MailService {
         try {
             mailSender.send(message);
         } catch (org.springframework.mail.MailException ex) {
+            log.warn("SMTP send failed: {}", ex.toString(), ex);
             throw new BizException("验证码邮件发送失败，请稍后再试或联系管理员");
         }
         redis.opsForValue().set(CODE_KEY + to, code, Duration.ofMinutes(10));
@@ -111,6 +115,7 @@ public class MailService {
         try {
             mailSender.send(message);
         } catch (org.springframework.mail.MailException ex) {
+            log.warn("SMTP send failed: {}", ex.toString(), ex);
             throw new BizException("验证码邮件发送失败，请稍后再试");
         }
         redis.opsForValue().set(REG_CODE_KEY + to, code, Duration.ofMinutes(10));

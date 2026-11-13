@@ -56,6 +56,9 @@ services:
       AI_API_KEY: ${AI_API_KEY:-}
       AI_MODEL: ${AI_MODEL:-glm-4-flash}
       SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       BLOG_UPLOAD_DIR: /app/uploads
       API_DOC_ENABLED: ${API_DOC_ENABLED:-false}
       # Knife4j 自动配置必须与 springdoc 同步开关，否则 API 文档关闭时启动失败

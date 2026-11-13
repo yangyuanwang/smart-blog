@@ -27,6 +27,7 @@ async function submit () {
       }
     })
     saveTokens(result.accessToken, result.refreshToken)
+    await useAuthSession().refresh()
     success.value = true
     await navigateTo('/')
   } catch (e) {

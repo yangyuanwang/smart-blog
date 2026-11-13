@@ -4,6 +4,20 @@ const route = useRoute()
 const colorMode = useColorMode()
 const mobileOpen = ref(false)
 
+// 登录态：客户端拉取资料，登录/注册/退出后由各页面触发 refresh
+const { user, ready, refresh, logout } = useAuthSession()
+onMounted(refresh)
+watch(() => route.fullPath, () => {
+  mobileOpen.value = false
+  // 路由切换后同步登录态（登录页跳回时导航栏即时更新）
+  refresh()
+})
+
+async function onLogout () {
+  await logout()
+  refresh()
+}
+
 const links = [
   { to: '/articles', label: '文章' },
   { to: '/projects', label: '作品集' },
@@ -13,11 +27,7 @@ const links = [
   { to: '/about', label: '关于' }
 ]
 
-// 路由变化时收起移动端菜单并复位焦点到内容区
-watch(() => route.fullPath, () => {
-  mobileOpen.value = false
-})
-
+// 路由变化时收起移动端菜单（登录态刷新已在上方统一处理）
 function toggleTheme () {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
 }
@@ -49,6 +59,29 @@ const siteName = computed(() => '智序 SMART WORKSPACE')
         </ul>
 
         <div class="ml-auto flex items-center gap-1">
+          <!-- 登录态：身份 + 退出；未登录：登录入口 -->
+          <template v-if="user">
+            <NuxtLink
+              to="/admin/profile"
+              class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm hover:bg-surface-2 focus-visible:ring-2 ring-app"
+              title="个人中心"
+            >
+              <img v-if="user.img" :src="user.img" alt="" class="w-5 h-5 rounded-full object-cover">
+              <span v-else class="w-5 h-5 rounded-full bg-surface-2 grid place-items-center text-xs" aria-hidden="true">{{ (user.nickname || user.username).slice(0, 1) }}</span>
+              <span class="max-w-24 truncate">{{ user.nickname || user.username }}</span>
+            </NuxtLink>
+            <button
+              type="button"
+              class="p-2 rounded-lg hover:bg-surface-2 focus-visible:ring-2 ring-app text-sm"
+              aria-label="退出登录"
+              @click="onLogout"
+            >退出</button>
+          </template>
+          <NuxtLink
+            v-else-if="ready"
+            to="/login"
+            class="px-2.5 py-1.5 rounded-lg text-sm hover:bg-surface-2 focus-visible:ring-2 ring-app"
+          >登录</NuxtLink>
           <button
             type="button"
             class="p-2 rounded-lg hover:bg-surface-2 focus-visible:ring-2 ring-app"
@@ -59,7 +92,7 @@ const siteName = computed(() => '智序 SMART WORKSPACE')
           </button>
           <NuxtLink
             to="/admin"
-            class="hidden md:inline-flex px-3 py-1.5 text-sm rounded-lg hover:bg-surface-2 focus-visible:ring-2 ring-app"
+            class="hidden sm:inline-flex px-2.5 py-1.5 rounded-lg text-sm hover:bg-surface-2 focus-visible:ring-2 ring-app"
           >后台</NuxtLink>
           <button
             type="button"

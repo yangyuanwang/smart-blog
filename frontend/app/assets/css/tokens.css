@@ -81,6 +81,11 @@ html {
   scroll-behavior: smooth;
 }
 
+/* 光晕等装饰元素刻意超出容器，禁止横向滚动条 */
+html, body {
+  overflow-x: clip;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

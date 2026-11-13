@@ -19,6 +19,7 @@ async function submit () {
       body: { username: email.value.trim(), password: password.value }
     })
     saveTokens(result.accessToken, result.refreshToken)
+    await useAuthSession().refresh()
     await navigateTo('/')
   } catch (e) {
     error.value = (e as Error).message || '登录失败'

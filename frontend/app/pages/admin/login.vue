@@ -20,6 +20,7 @@ async function submit () {
       body: { username: username.value.trim(), password: password.value }
     })
     saveTokens(result.accessToken, result.refreshToken)
+    await useAuthSession().refresh()
     const next = String(route.query.next ?? '/admin')
     await navigateTo(next.startsWith('/admin') ? next : '/admin')
   } catch (e) {

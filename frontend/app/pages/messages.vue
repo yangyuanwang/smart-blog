@@ -81,13 +81,13 @@ function goPage (target: number) {
   router.push({ path: '/messages', query: target > 1 ? { page: String(target) } : {} })
 }
 
-useSeoMeta({ title: '留言板', description: '给博主留言，楼中楼回复，先审后发' })
+useSeoMeta({ title: '留言板', description: '给博主留言，楼中楼回复，发布即显示' })
 </script>
 
 <template>
   <div class="max-w-3xl mx-auto">
     <h1 class="font-serif text-3xl font-bold">留言板</h1>
-    <p class="mt-2 text-sm text-muted">在这里留言、提问或打个招呼（留言先审后发）</p>
+    <p class="mt-2 text-sm text-muted">在这里留言、提问或打个招呼（发布即显示，违规内容会被删除）</p>
 
     <!-- 发布表单 -->
     <form class="mt-6 rounded-xl border border-app bg-surface p-4" @submit.prevent="submit">
@@ -100,9 +100,9 @@ useSeoMeta({ title: '留言板', description: '给博主留言，楼中楼回复
         <input
           id="msg-nickname"
           v-model="nickname"
-          maxlength="32"
-          placeholder="昵称（未登录）"
-          class="sm:w-56 rounded-lg border border-app bg-app px-3 py-2 text-sm focus-visible:ring-2 ring-app"
+          maxlength="16"
+          placeholder="昵称（选填，留空自动生成游客昵称）"
+          class="sm:w-72 rounded-lg border border-app bg-app px-3 py-2 text-sm focus-visible:ring-2 ring-app"
         >
       </div>
       <p v-else class="text-xs text-muted mt-1">以 {{ session.nickname || session.username }} 的身份留言</p>

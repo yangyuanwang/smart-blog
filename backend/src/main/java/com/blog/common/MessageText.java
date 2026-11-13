@@ -14,8 +14,12 @@ public final class MessageText {
 
     public static String nickname(String raw) {
         String name = Texts.trim(raw);
-        if (name.isEmpty() || name.length() > 16) {
-            throw new BizException("昵称需要 1 到 16 个字");
+        // 匿名访客昵称选填：留空自动生成「游客_xxxx」，不强制填写
+        if (name.isEmpty()) {
+            name = "游客_" + Texts.trim(java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 4));
+        }
+        if (name.length() > 16) {
+            throw new BizException("昵称不能超过 16 个字");
         }
         reject(name);
         return name;

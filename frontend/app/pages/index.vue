@@ -82,6 +82,24 @@ const statCards = computed(() => [
   { label: '开源作品', value: data.value?.stats?.projects ?? 0, icon: '🧩' }
 ])
 
+// 日历标记：最新文章的发布日期
+const markedDates = computed(() => {
+  const map: Record<string, number> = {}
+  for (const article of data.value?.latest ?? []) {
+    const day = article.createTime?.slice(0, 10)
+    if (day) {
+      map[day] = (map[day] ?? 0) + 1
+    }
+  }
+  return map
+})
+
+// 今日热点：走 Nitro 服务端路由（内存缓存 30 分钟，失败返回空数组）
+const { data: hotData, pending: hotPending } = await useAsyncData('hotnews', () => $fetch<{
+  code: number, data: Array<{ title: string, url: string, hot?: string }>
+}>('/hotnews'), { server: true, default: () => ({ code: 0, data: [] }) })
+const hotItems = computed(() => hotData.value?.data ?? [])
+
 function fmtDate (value: string) {
   return value?.slice(0, 10) ?? ''
 }
@@ -181,6 +199,35 @@ useSeoMeta({
           <ArticleCard :article="article" />
         </li>
       </ul>
+    </section>
+
+    <!-- 日历 + 今日热点 -->
+    <section class="mt-12 grid gap-4 lg:grid-cols-[1fr_1.4fr]" aria-label="日历与热点">
+      <CalendarCard :marked="markedDates" />
+      <div class="rounded-xl border border-app bg-surface p-4">
+        <div class="flex items-baseline justify-between">
+          <p class="font-serif font-semibold">今日热点</p>
+          <span class="text-xs text-muted">百度热点 · 30 分钟缓存</span>
+        </div>
+        <p v-if="hotPending" class="mt-4 text-sm text-muted" role="status">加载中…</p>
+        <p v-else-if="!hotItems.length" class="mt-4 text-sm text-muted">热点源暂时不可用</p>
+        <ol v-else class="mt-3 space-y-2">
+          <li v-for="(item, index) in hotItems" :key="item.url" class="flex items-center gap-3 text-sm">
+            <span
+              class="shrink-0 w-5 h-5 grid place-items-center rounded-md text-xs"
+              :class="index < 3 ? 'text-white' : 'bg-surface-2 text-muted'"
+              :style="index < 3 ? { background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' } : {}"
+            >{{ index + 1 }}</span>
+            <a
+              :href="item.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="truncate hover:text-main focus-visible:ring-2 ring-app rounded"
+            >{{ item.title }}</a>
+            <span v-if="item.hot" class="ml-auto shrink-0 text-xs text-muted">{{ item.hot }}</span>
+          </li>
+        </ol>
+      </div>
     </section>
 
     <!-- 精选作品 -->

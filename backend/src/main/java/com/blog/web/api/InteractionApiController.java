@@ -235,7 +235,8 @@ public class InteractionApiController {
     }
 
     /**
-     * 留言板发布留言（楼中楼）。匿名走验证码与 30 秒限流；管理员留言可选直接过审。
+     * 留言板发布留言（楼中楼）。策略为先发后审：留言即显，防 spam 依赖 Redis 限流与
+     * URL/敏感词过滤，管理员保留删除与回复权。匿名昵称留空时自动生成游客昵称。
      *
      * @param request 留言请求
      * @param httpRequest 原始请求
@@ -256,12 +257,10 @@ public class InteractionApiController {
             // 匿名留言校验 Redis 验证码
             verifyMessageCaptcha(request.captchaId(), request.captchaCode());
         }
-        boolean skipAudit = user != null && user.getRole() != null && "0".equals(user.getRole())
-                && settingService.enabled("admin_message_pass", true);
+        // 先发后审：直接过审；过滤与限流在上游已完成
         contentService.addMessage(user, request.nickname(), request.content(), clientIp,
-                request.parentId(), skipAudit);
-        return Result.ok(Map.of("audited", !skipAudit,
-                "message", skipAudit ? "留言已发布" : "留言提交成功，等待管理员审核"));
+                request.parentId(), true);
+        return Result.ok(Map.of("audited", false, "message", "留言已发布"));
     }
 
     /**

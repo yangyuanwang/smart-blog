@@ -6,14 +6,13 @@ const route = useRoute()
 const username = ref('')
 const password = ref('')
 const submitting = ref(false)
-const error = ref('')
+const toast = useToast()
 
 async function submit () {
   if (submitting.value) {
     return
   }
   submitting.value = true
-  error.value = ''
   try {
     const result = await api<{ accessToken: string, refreshToken: string, user: { admin: boolean } }>('/auth/admin-login', {
       method: 'POST',
@@ -24,7 +23,7 @@ async function submit () {
     const next = String(route.query.next ?? '/admin')
     await navigateTo(next.startsWith('/admin') ? next : '/admin')
   } catch (e) {
-    error.value = (e as Error).message || '登录失败'
+    toast.error((e as Error).message || '登录失败')
   } finally {
     submitting.value = false
   }
@@ -44,7 +43,6 @@ async function submit () {
         <span class="mb-1 block">密码</span>
         <input v-model="password" type="password" required autocomplete="current-password" class="w-full rounded-lg border border-app bg-app px-3 py-2 text-sm focus-visible:ring-2 ring-app">
       </label>
-      <p v-if="error" class="text-sm" style="color: var(--color-danger)" role="alert">{{ error }}</p>
       <button
         type="submit"
         :disabled="submitting"

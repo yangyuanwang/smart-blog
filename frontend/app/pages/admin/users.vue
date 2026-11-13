@@ -24,26 +24,26 @@ interface PagePayload { list: UserRow[], total: number }
 
 const { data: session } = await useAsyncData('me-profile', () => api<{ uid: number } | null>('/me/profile').catch(() => null))
 
-const toast = ref('')
+const toast = useToast()
 const resetting = ref<{ uid: number, password: string } | null>(null)
 
 async function changeState (user: UserRow, state: string) {
   try {
     await api(`/admin/users/${user.uid}/state`, { method: 'PUT', body: { value: state } })
-    toast.value = state === '0' ? '已锁定（会话已吊销）' : '已解锁'
+    toast.success(state === '0' ? '已锁定（会话已吊销）' : '已解锁')
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
 async function changeRole (user: UserRow, role: string) {
   try {
     await api(`/admin/users/${user.uid}/role`, { method: 'PUT', body: { value: role } })
-    toast.value = role === '0' ? '已提升为管理员' : '已降为普通用户'
+    toast.success(role === '0' ? '已提升为管理员' : '已降为普通用户')
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -53,10 +53,10 @@ async function resetPassword () {
   }
   try {
     await api(`/admin/users/${resetting.value.uid}/password`, { method: 'PUT', body: { value: resetting.value.password } })
-    toast.value = '密码已重置'
+    toast.success('密码已重置')
     resetting.value = null
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -80,7 +80,6 @@ useSeoMeta({ title: '用户管理' })
         class="w-64 rounded-lg border border-app bg-surface px-3 py-2 text-sm focus-visible:ring-2 ring-app"
       >
     </div>
-    <p v-if="toast" class="mt-2 text-sm" style="color: var(--color-ok)" role="status">{{ toast }}</p>
 
     <div class="mt-4 rounded-xl border border-app bg-surface overflow-x-auto">
       <table class="w-full text-sm min-w-[680px]">

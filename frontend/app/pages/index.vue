@@ -103,10 +103,6 @@ const hotItems = computed(() => hotData.value?.data ?? [])
 // 管理入口仅管理员可见（游客/普通访客不显示后台与控制台）；登录态由布局层统一拉取
 const { user: session } = useAuthSession()
 
-function fmtDate (value: string) {
-  return value?.slice(0, 10) ?? ''
-}
-
 useSeoMeta({
   title: '首页',
   description: '智序个人博客：技术文章、作品集与思考记录'

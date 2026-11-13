@@ -13,16 +13,16 @@ const newTag = ref('')
 const newTagCid = ref<number | null>(null)
 const editingCategory = ref<{ cid: number, name: string } | null>(null)
 const editingTag = ref<{ tid: number, tname: string, cid: number } | null>(null)
-const toast = ref('')
+const toast = useToast()
 
 async function addCategory () {
   try {
     await api('/admin/categories', { method: 'POST', body: { cname: newCategory.value } })
     newCategory.value = ''
-    toast.value = '栏目已添加'
+    toast.success('栏目已添加')
     await refreshCategories()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -33,10 +33,10 @@ async function renameCategory () {
   try {
     await api(`/admin/categories/${editingCategory.value.cid}`, { method: 'PUT', body: { cname: editingCategory.value.name } })
     editingCategory.value = null
-    toast.value = '栏目已重命名'
+    toast.success('栏目已重命名')
     await refreshCategories()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -46,11 +46,11 @@ async function removeCategory (category: Category) {
   }
   try {
     await api(`/admin/categories/${category.cid}`, { method: 'DELETE' })
-    toast.value = '栏目已删除'
+    toast.success('栏目已删除')
     await refreshCategories()
     await refreshTags()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -58,10 +58,10 @@ async function addTag () {
   try {
     await api('/admin/tags', { method: 'POST', body: { cid: newTagCid.value, tname: newTag.value } })
     newTag.value = ''
-    toast.value = '标签已添加'
+    toast.success('标签已添加')
     await refreshTags()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -72,10 +72,10 @@ async function updateTag () {
   try {
     await api(`/admin/tags/${editingTag.value.tid}`, { method: 'PUT', body: { tname: editingTag.value.tname, cid: editingTag.value.cid } })
     editingTag.value = null
-    toast.value = '标签已更新'
+    toast.success('标签已更新')
     await refreshTags()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -85,10 +85,10 @@ async function removeTag (tag: Tag) {
   }
   try {
     await api(`/admin/tags/${tag.tid}`, { method: 'DELETE' })
-    toast.value = '标签已删除'
+    toast.success('标签已删除')
     await refreshTags()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -113,7 +113,6 @@ const groupedTags = computed(() => {
 <template>
   <div>
     <h1 class="font-serif text-2xl font-bold">栏目与标签</h1>
-    <p v-if="toast" class="mt-2 text-sm" role="status">{{ toast }}</p>
 
     <div class="mt-6 grid gap-6 lg:grid-cols-2">
       <!-- 栏目 -->

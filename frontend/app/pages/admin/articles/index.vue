@@ -36,7 +36,7 @@ const { data, pending, refresh } = await useAsyncData(
 interface PagePayload { list: AdminArticle[], total: number, page: number, size: number }
 
 const totalPages = computed(() => Math.max(1, Math.ceil((data.value?.total ?? 0) / (data.value?.size ?? 10))))
-const toast = ref('')
+const toast = useToast()
 
 const statusOptions = [
   { value: '', label: '全部状态' },
@@ -58,29 +58,29 @@ function search () {
 async function changeStatus (id: number, next: string) {
   try {
     const result = await api<{ message: string }>(`/admin/articles/${id}/status`, { method: 'PUT', body: { status: next } })
-    toast.value = result.message
+    toast.success(result.message)
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
 async function toggleTop (article: AdminArticle) {
   try {
     await api(`/admin/articles/${article.aid}/hot`, { method: 'PUT', body: { status: article.isTop === 1 ? '0' : '1' } })
-    toast.value = article.isTop === 1 ? '已取消置顶' : '已置顶'
+    toast.success(article.isTop === 1 ? '已取消置顶' : '已置顶')
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
 async function regenAi (id: number) {
   try {
     await api(`/admin/articles/${id}/ai-summary`, { method: 'PUT' })
-    toast.value = 'AI 摘要生成任务已提交（异步执行）'
+    toast.success('AI 摘要生成任务已提交（异步执行）')
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -90,10 +90,10 @@ async function remove (article: AdminArticle) {
   }
   try {
     await api(`/admin/articles/${article.aid}`, { method: 'DELETE' })
-    toast.value = '已删除'
+    toast.success('已删除')
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -123,8 +123,6 @@ useSeoMeta({ title: '文章管理' })
       </select>
       <button type="button" class="px-3 py-2 rounded-lg text-sm border border-app bg-surface hover:bg-surface-2" @click="search">搜索</button>
     </div>
-
-    <p v-if="toast" class="mt-3 text-sm" style="color: var(--color-ok)" role="status">{{ toast }}</p>
     <p v-if="pending" class="mt-6 text-muted" role="status">加载中…</p>
 
     <div v-else class="mt-4 rounded-xl border border-app bg-surface overflow-x-auto">

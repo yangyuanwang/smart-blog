@@ -13,16 +13,16 @@ interface Notice {
 const { data, refresh } = await useAsyncData('admin-notices', () => api<Notice[]>('/admin/notices'))
 
 const form = ref<Notice>({ title: '', content: '', isTop: '0' })
-const toast = ref('')
+const toast = useToast()
 
 async function save () {
   try {
     await api('/admin/notices', { method: 'POST', body: { ...form.value } })
-    toast.value = form.value.id ? '公告已更新' : '公告已发布'
+    toast.success(form.value.id ? '公告已更新' : '公告已发布')
     form.value = { title: '', content: '', isTop: '0' }
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -36,10 +36,10 @@ async function remove (notice: Notice) {
   }
   try {
     await api(`/admin/notices/${notice.id}`, { method: 'DELETE' })
-    toast.value = '公告已删除'
+    toast.success('公告已删除')
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -49,7 +49,6 @@ useSeoMeta({ title: '公告管理' })
 <template>
   <div>
     <h1 class="font-serif text-2xl font-bold">公告管理</h1>
-    <p v-if="toast" class="mt-2 text-sm" style="color: var(--color-ok)" role="status">{{ toast }}</p>
 
     <form class="mt-6 rounded-xl border border-app bg-surface p-4 grid gap-3" @submit.prevent="save">
       <div class="flex flex-wrap gap-3">

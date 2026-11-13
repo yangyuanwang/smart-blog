@@ -12,20 +12,19 @@ const { data, error, pending } = await useAsyncData('links', () => api<LinkItem[
 const showForm = ref(false)
 const form = ref({ siteName: '', siteUrl: '', siteDesc: '', contact: '' })
 const submitting = ref(false)
-const feedback = ref<{ ok: boolean, message: string } | null>(null)
+const toast = useToast()
 
 async function submit () {
   if (submitting.value) {
     return
   }
   submitting.value = true
-  feedback.value = null
   try {
     await api('/link-applies', { method: 'POST', body: { ...form.value } })
-    feedback.value = { ok: true, message: '申请已提交，等待管理员审核' }
+    toast.success('申请已提交，等待管理员审核')
     showForm.value = false
   } catch (error) {
-    feedback.value = { ok: false, message: (error as Error).message || '提交失败' }
+    toast.error((error as Error).message || '提交失败')
   } finally {
     submitting.value = false
   }
@@ -69,10 +68,7 @@ useSeoMeta({ title: '友链', description: '交换友链，一起在互联网上
         <input v-model="form.contact" maxlength="100" class="w-full rounded-lg border border-app bg-app px-3 py-2 text-sm focus-visible:ring-2 ring-app">
       </label>
       <div class="flex items-center justify-between gap-3">
-        <p v-if="feedback" :role="feedback.ok ? 'status' : 'alert'" class="text-sm" :style="{ color: feedback.ok ? 'var(--color-ok)' : 'var(--color-danger)' }">
-          {{ feedback.message }}
-        </p>
-        <span v-else />
+
         <button
           type="submit"
           :disabled="submitting"

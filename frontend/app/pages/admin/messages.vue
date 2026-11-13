@@ -14,16 +14,16 @@ interface MessageRow {
 const { data, pending, refresh } = await useAsyncData('admin-messages', () => api<PagePayload>('/admin/messages', { query: { page: 1, size: 20 } }))
 interface PagePayload { list: MessageRow[], total: number }
 
-const toast = ref('')
+const toast = useToast()
 const replying = ref<{ id: number, text: string } | null>(null)
 
 async function audit (id: number, next: string) {
   try {
     await api(`/admin/messages/${id}/audit`, { method: 'PUT', body: { status: next } })
-    toast.value = next === '1' ? '已通过' : '已驳回'
+    toast.success(next === '1' ? '已通过' : '已驳回')
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -34,10 +34,10 @@ async function reply () {
   try {
     await api(`/admin/messages/${replying.value.id}/reply`, { method: 'PUT', body: { reply: replying.value.text } })
     replying.value = null
-    toast.value = '已回复并通过'
+    toast.success('已回复并通过')
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -47,10 +47,10 @@ async function remove (id: number) {
   }
   try {
     await api(`/admin/messages/${id}`, { method: 'DELETE' })
-    toast.value = '已删除'
+    toast.success('已删除')
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -66,7 +66,6 @@ useSeoMeta({ title: '留言审核' })
 <template>
   <div>
     <h1 class="font-serif text-2xl font-bold">留言审核</h1>
-    <p v-if="toast" class="mt-2 text-sm" style="color: var(--color-ok)" role="status">{{ toast }}</p>
     <p v-if="pending" class="mt-6 text-muted" role="status">加载中…</p>
     <div v-else-if="!data?.list?.length" class="mt-6 rounded-xl border border-app bg-surface px-4 py-10 text-center text-muted">
       没有留言

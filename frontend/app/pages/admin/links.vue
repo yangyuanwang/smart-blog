@@ -26,16 +26,16 @@ interface PagePayload { list: ApplyRow[], total: number }
 
 const form = ref({ id: null as number | null, siteName: '', siteUrl: '', siteDesc: '', sort: 0 })
 const rejecting = ref<{ id: number, remark: string } | null>(null)
-const toast = ref('')
+const toast = useToast()
 
 async function save () {
   try {
     await api('/admin/links', { method: 'POST', body: { ...form.value } })
-    toast.value = form.value.id ? '友链已更新' : '友链已添加'
+    toast.success(form.value.id ? '友链已更新' : '友链已添加')
     form.value = { id: null, siteName: '', siteUrl: '', siteDesc: '', sort: 0 }
     await refreshLinks()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -49,21 +49,21 @@ async function removeLink (id: number) {
   }
   try {
     await api(`/admin/links/${id}`, { method: 'DELETE' })
-    toast.value = '友链已删除'
+    toast.success('友链已删除')
     await refreshLinks()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
 async function approve (id: number) {
   try {
     await api(`/admin/link-applies/${id}/approve`, { method: 'PUT' })
-    toast.value = '申请已通过并加入友链'
+    toast.success('申请已通过并加入友链')
     await refreshApplies()
     await refreshLinks()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -74,10 +74,10 @@ async function reject () {
   try {
     await api(`/admin/link-applies/${rejecting.value.id}/reject`, { method: 'PUT', body: { remark: rejecting.value.remark } })
     rejecting.value = null
-    toast.value = '申请已拒绝'
+    toast.success('申请已拒绝')
     await refreshApplies()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -93,7 +93,6 @@ useSeoMeta({ title: '友链管理' })
 <template>
   <div>
     <h1 class="font-serif text-2xl font-bold">友链与申请</h1>
-    <p v-if="toast" class="mt-2 text-sm" style="color: var(--color-ok)" role="status">{{ toast }}</p>
 
     <!-- 待审申请 -->
     <section class="mt-6" aria-labelledby="apply-heading">

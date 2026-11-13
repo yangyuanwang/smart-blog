@@ -8,22 +8,20 @@ const email = ref('')
 const code = ref('')
 const newPassword = ref('')
 const submitting = ref(false)
-const error = ref('')
-const notice = ref('')
+const toast = useToast()
 
 async function requestCode () {
   if (submitting.value) {
     return
   }
   submitting.value = true
-  error.value = ''
   try {
     await api('/auth/reset/request', { method: 'POST', body: { username: username.value.trim() } })
     // 后端不区分账号是否存在（防枚举），统一提示检查邮箱
-    notice.value = '如果该账号绑定了邮箱，验证码已发送，请查收'
+    toast.success('如果该账号绑定了邮箱，验证码已发送，请查收')
     step.value = 'confirm'
   } catch (e) {
-    error.value = (e as Error).message || '请求失败'
+    toast.error((e as Error).message || '请求失败')
   } finally {
     submitting.value = false
   }
@@ -34,7 +32,6 @@ async function confirmReset () {
     return
   }
   submitting.value = true
-  error.value = ''
   try {
     await api('/auth/reset/confirm', {
       method: 'POST',
@@ -45,10 +42,10 @@ async function confirmReset () {
         newPassword: newPassword.value
       }
     })
-    notice.value = '密码已重置，请使用新密码登录'
+    toast.success('密码已重置，请使用新密码登录')
     await navigateTo('/login')
   } catch (e) {
-    error.value = (e as Error).message || '重置失败'
+    toast.error((e as Error).message || '重置失败')
   } finally {
     submitting.value = false
   }
@@ -58,14 +55,12 @@ async function confirmReset () {
 <template>
   <div class="rounded-2xl border border-app bg-surface p-6">
     <h1 class="font-serif text-xl font-bold text-center">找回密码</h1>
-    <p v-if="notice" class="mt-3 text-sm text-center" style="color: var(--color-ok)" role="status">{{ notice }}</p>
 
     <form v-if="step === 'request'" class="mt-5 space-y-4" @submit.prevent="requestCode">
       <label class="block text-sm">
         <span class="mb-1 block">用户名</span>
         <input v-model="username" required class="w-full rounded-lg border border-app bg-app px-3 py-2 text-sm focus-visible:ring-2 ring-app">
       </label>
-      <p v-if="error" class="text-sm" style="color: var(--color-danger)" role="alert">{{ error }}</p>
       <button
         type="submit"
         :disabled="submitting"
@@ -89,7 +84,6 @@ async function confirmReset () {
         <span class="mb-1 block">新密码（至少 6 位）</span>
         <input v-model="newPassword" type="password" required minlength="6" maxlength="32" autocomplete="new-password" class="w-full rounded-lg border border-app bg-app px-3 py-2 text-sm focus-visible:ring-2 ring-app">
       </label>
-      <p v-if="error" class="text-sm" style="color: var(--color-danger)" role="alert">{{ error }}</p>
       <button
         type="submit"
         :disabled="submitting"

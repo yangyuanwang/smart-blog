@@ -126,7 +126,6 @@ onBeforeUnmount(() => tocObserver?.disconnect())
 const views = ref(data.value!.views)
 const likes = ref(article.value.thumbsUp ?? 0)
 const liked = ref(false)
-const likeFeedback = ref('')
 
 onMounted(async () => {
   try {
@@ -148,10 +147,10 @@ async function like () {
     likes.value = result.likes
     liked.value = true
     if (result.first) {
-      likeFeedback.value = '已加上一赞'
+      toast.success('感谢点赞')
     }
   } catch (error) {
-    likeFeedback.value = (error as Error).message || '点赞失败'
+    toast.success((error as Error).message || '点赞失败')
   }
 }
 
@@ -405,7 +404,6 @@ function scrollToTop () {
           <span aria-hidden="true">↑</span>
         </button>
       </div>
-      <p v-if="likeFeedback" class="mt-2 text-center text-xs text-muted" role="status">{{ likeFeedback }}</p>
     </div>
   </div>
 </template>

@@ -18,7 +18,7 @@ const fields = [
 
 const values = ref<Record<string, string>>({})
 const saving = ref(false)
-const toast = ref('')
+const toast = useToast()
 
 const { data, refresh } = await useAsyncData('admin-settings', () => api<Record<string, string>>('/admin/settings'))
 
@@ -30,10 +30,10 @@ async function save () {
   saving.value = true
   try {
     await api('/admin/settings', { method: 'PUT', body: { values: values.value } })
-    toast.value = '设置已保存，前台缓存已失效'
+    toast.success('设置已保存，前台缓存已失效')
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   } finally {
     saving.value = false
   }
@@ -60,7 +60,6 @@ useSeoMeta({ title: '站点设置' })
           class="w-full rounded-lg border border-app bg-app px-3 py-2 text-sm focus-visible:ring-2 ring-app"
         >
       </label>
-      <p v-if="toast" class="text-sm" style="color: var(--color-ok)" role="status">{{ toast }}</p>
       <button
         type="submit"
         :disabled="saving"

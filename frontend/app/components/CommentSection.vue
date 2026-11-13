@@ -9,7 +9,6 @@ interface CommentItem {
 
 const props = defineProps<{ aid: number, allowComment: boolean }>()
 
-const emit = defineEmits<{ (e: 'published', message: string): void }>()
 
 const { data: session } = await useAsyncData('me-profile', () => api<MeProfile | null>('/me/profile').catch(() => null))
 
@@ -24,14 +23,13 @@ const { data: comments, refresh } = await useAsyncData(`comments-${props.aid}`, 
 const nickname = ref('')
 const content = ref('')
 const submitting = ref(false)
-const feedback = ref<{ ok: boolean, message: string } | null>(null)
+const toast = useToast()
 
 async function submit () {
   if (submitting.value) {
     return
   }
   submitting.value = true
-  feedback.value = null
   try {
     const result = await api<{ audited: boolean, message: string }>('/comments', {
       method: 'POST',
@@ -41,12 +39,11 @@ async function submit () {
         content: content.value.trim()
       }
     })
-    emit('published', result.message)
-    feedback.value = { ok: true, message: result.message }
+    toast.success(result.message)
     content.value = ''
     await refresh()
   } catch (error) {
-    feedback.value = { ok: false, message: (error as Error).message || '提交失败' }
+    toast.error((error as Error).message || '提交失败')
   } finally {
     submitting.value = false
   }
@@ -102,10 +99,7 @@ function fmtTime (value: string) {
         class="mt-2 w-full rounded-lg border border-app bg-app px-3 py-2 text-sm focus-visible:ring-2 ring-app"
       />
       <div class="mt-3 flex items-center justify-between gap-3">
-        <p v-if="feedback" :role="feedback.ok ? 'status' : 'alert'" class="text-sm" :style="{ color: feedback.ok ? 'var(--color-ok)' : 'var(--color-danger)' }">
-          {{ feedback.message }}
-        </p>
-        <span v-else />
+
         <button
           type="submit"
           :disabled="submitting || !content.trim()"

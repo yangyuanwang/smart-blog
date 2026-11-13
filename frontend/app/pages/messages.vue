@@ -30,7 +30,7 @@ const nickname = ref('')
 const content = ref('')
 const parentId = ref<number | null>(null)
 const submitting = ref(false)
-const feedback = ref<{ ok: boolean, message: string } | null>(null)
+const toast = useToast()
 
 const totalPages = computed(() => Math.max(1, Math.ceil((data.value?.total ?? 0) / (data.value?.size ?? 8))))
 
@@ -39,7 +39,6 @@ async function submit () {
     return
   }
   submitting.value = true
-  feedback.value = null
   try {
     const result = await api<{ audited: boolean, message: string }>('/messages', {
       method: 'POST',
@@ -49,12 +48,12 @@ async function submit () {
         parentId: parentId.value ?? undefined
       }
     })
-    feedback.value = { ok: true, message: result.message }
+    toast.success(result.message)
     content.value = ''
     parentId.value = null
     await refresh()
   } catch (error) {
-    feedback.value = { ok: false, message: (error as Error).message || '提交失败' }
+    toast.error((error as Error).message || '提交失败')
   } finally {
     submitting.value = false
   }
@@ -68,7 +67,7 @@ async function remove (id: number) {
     await api(`/messages/${id}`, { method: 'DELETE' })
     await refresh()
   } catch (error) {
-    feedback.value = { ok: false, message: (error as Error).message || '删除失败' }
+    toast.error((error as Error).message || '删除失败')
   }
 }
 
@@ -117,10 +116,7 @@ useSeoMeta({ title: '留言板', description: '给博主留言，楼中楼回复
         class="mt-2 w-full rounded-lg border border-app bg-app px-3 py-2 text-sm focus-visible:ring-2 ring-app"
       />
       <div class="mt-3 flex items-center justify-between gap-3">
-        <p v-if="feedback" :role="feedback.ok ? 'status' : 'alert'" class="text-sm" :style="{ color: feedback.ok ? 'var(--color-ok)' : 'var(--color-danger)' }">
-          {{ feedback.message }}
-        </p>
-        <span v-else />
+        
         <button
           type="submit"
           :disabled="submitting || !content.trim()"

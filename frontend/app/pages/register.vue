@@ -11,8 +11,7 @@ const mailEnabled = ref(false)
 const sending = ref(false)
 const countdown = ref(0)
 const submitting = ref(false)
-const error = ref('')
-const success = ref(false)
+const toast = useToast()
 
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
@@ -52,14 +51,11 @@ async function sendCode () {
     return
   }
   sending.value = true
-  error.value = ''
   try {
     await api('/auth/email/code', { method: 'POST', body: { email: email.value.trim() } })
     startCountdown()
-    success.value = false
-    error.value = ''
   } catch (e) {
-    error.value = (e as Error).message || '发送失败'
+    toast.error((e as Error).message || '发送失败')
   } finally {
     sending.value = false
   }
@@ -70,7 +66,6 @@ async function submit () {
     return
   }
   submitting.value = true
-  error.value = ''
   try {
     const result = await api<{ accessToken: string, refreshToken: string }>('/auth/register', {
       method: 'POST',
@@ -84,10 +79,10 @@ async function submit () {
     })
     saveTokens(result.accessToken, result.refreshToken)
     await useAuthSession().refresh()
-    success.value = true
+    toast.success('注册成功，已自动登录')
     await navigateTo('/')
   } catch (e) {
-    error.value = (e as Error).message || '注册失败'
+    toast.error((e as Error).message || '注册失败')
   } finally {
     submitting.value = false
   }
@@ -126,7 +121,6 @@ async function submit () {
           @click="sendCode"
         >{{ sending ? '发送中…' : countdown > 0 ? `${countdown}s` : '发送验证码' }}</button>
       </div>
-      <p v-if="error" class="text-sm" style="color: var(--color-danger)" role="alert">{{ error }}</p>
       <button
         type="submit"
         :disabled="submitting"
@@ -135,7 +129,7 @@ async function submit () {
       >
 {{ submitting ? '注册中…' : '注册' }}
 </button>
-      <p v-if="success" class="text-sm" style="color: var(--color-ok)" role="status">注册成功，已自动登录</p>
+
     </form>
     <p class="mt-4 text-center text-sm text-muted">
       已有账号？<NuxtLink to="/login" class="hover:text-main focus-visible:ring-2 ring-app rounded">去登录</NuxtLink>

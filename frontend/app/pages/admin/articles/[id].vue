@@ -55,8 +55,7 @@ if (isEdit.value) {
 }
 
 const saving = ref(false)
-const toast = ref('')
-const error = ref('')
+const toast = useToast()
 const uploading = ref(false)
 
 async function uploadCover (event: Event) {
@@ -71,9 +70,9 @@ async function uploadCover (event: Event) {
     body.append('file', file)
     const result = await api<{ url: string }>('/admin/upload', { method: 'POST', body })
     form.value.logo = result.url
-    toast.value = '封面上传成功'
+    toast.success('封面上传成功')
   } catch (e) {
-    error.value = (e as Error).message || '上传失败'
+    toast.error((e as Error).message || '上传失败')
   } finally {
     uploading.value = false
     input.value = ''
@@ -85,8 +84,8 @@ async function save (publishStatus?: string) {
     return
   }
   saving.value = true
-  error.value = ''
-  toast.value = ''
+  toast.error('')
+  toast.success('')
   try {
     const payload = {
       title: form.value.title,
@@ -105,14 +104,14 @@ async function save (publishStatus?: string) {
     if (isEdit.value) {
       await api(`/admin/articles/${aid.value}`, { method: 'PUT', body: payload })
       form.value.publishStatus = publishStatus ?? form.value.publishStatus
-      toast.value = publishStatus === '1' ? '已发布' : '已保存'
+      toast.success(publishStatus === '1' ? '已发布' : '已保存')
     } else {
       const created = await api<{ aid: number }>('/admin/articles', { method: 'POST', body: payload })
-      toast.value = '创建成功，跳转编辑页'
+      toast.success('创建成功，跳转编辑页')
       await navigateTo(`/admin/articles/${created.aid}`)
     }
   } catch (e) {
-    error.value = (e as Error).message || '保存失败'
+    toast.error((e as Error).message || '保存失败')
   } finally {
     saving.value = false
   }
@@ -201,9 +200,6 @@ useSeoMeta({ title: isEdit.value ? '编辑文章' : '新建文章' })
           <textarea v-model="form.seoDesc" rows="2" maxlength="500" placeholder="SEO 描述" class="w-full rounded-lg border border-app bg-app px-3 py-2 text-sm" />
         </div>
       </details>
-
-      <p v-if="error" class="text-sm" style="color: var(--color-danger)" role="alert">{{ error }}</p>
-      <p v-if="toast" class="text-sm" style="color: var(--color-ok)" role="status">{{ toast }}</p>
 
       <div class="flex flex-wrap gap-3">
         <button

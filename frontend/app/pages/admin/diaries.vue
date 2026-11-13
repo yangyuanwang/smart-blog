@@ -15,7 +15,7 @@ const moods = ['随记', '开工', '想走', '读完', '高兴', '发呆']
 const { data, refresh } = await useAsyncData('admin-diaries', () => api<Diary[]>('/admin/diaries'))
 
 const form = ref<Diary>({ title: '', content: '', mood: '随记' })
-const toast = ref('')
+const toast = useToast()
 
 function edit (diary: Diary) {
   form.value = { ...diary }
@@ -28,11 +28,11 @@ function reset () {
 async function save () {
   try {
     await api('/admin/diaries', { method: 'POST', body: { ...form.value } })
-    toast.value = form.value.id ? '日记已更新' : '日记已添加'
+    toast.success(form.value.id ? '日记已更新' : '日记已添加')
     reset()
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -42,10 +42,10 @@ async function remove (diary: Diary) {
   }
   try {
     await api(`/admin/diaries/${diary.id}`, { method: 'DELETE' })
-    toast.value = '日记已删除'
+    toast.success('日记已删除')
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -55,7 +55,6 @@ useSeoMeta({ title: '日记管理' })
 <template>
   <div>
     <h1 class="font-serif text-2xl font-bold">日记管理</h1>
-    <p v-if="toast" class="mt-2 text-sm" style="color: var(--color-ok)" role="status">{{ toast }}</p>
 
     <form class="mt-6 rounded-xl border border-app bg-surface p-4 grid gap-3" @submit.prevent="save">
       <div class="flex flex-wrap gap-3">

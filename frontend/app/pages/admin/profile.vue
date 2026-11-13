@@ -20,8 +20,8 @@ const uploading = ref(false)
 
 const oldPassword = ref('')
 const newPassword = ref('')
-const profileToast = ref('')
-const passwordToast = ref('')
+const profileToast = useToast()
+const passwordToast = useToast()
 const passwordError = ref('')
 
 onMounted(async () => {
@@ -46,7 +46,7 @@ async function uploadAvatar (event: Event) {
     const result = await api<{ url: string }>('/admin/upload', { method: 'POST', body })
     img.value = result.url
   } catch (error) {
-    profileToast.value = (error as Error).message
+    profileToast.error((error as Error).message)
   } finally {
     uploading.value = false
     input.value = ''
@@ -59,9 +59,9 @@ async function saveProfile () {
       method: 'PUT',
       body: { nickname: nickname.value, email: email.value, phone: phone.value, img: img.value || undefined }
     })
-    profileToast.value = '资料已更新'
+    profileToast.success('资料已更新')
   } catch (error) {
-    profileToast.value = (error as Error).message
+    profileToast.error((error as Error).message)
   }
 }
 
@@ -73,7 +73,7 @@ async function changePassword () {
       body: { oldPassword: oldPassword.value, newPassword: newPassword.value }
     })
     saveTokens(result.accessToken, result.refreshToken)
-    passwordToast.value = '密码已修改，会话已更新'
+    passwordToast.success('密码已修改，会话已更新')
     oldPassword.value = ''
     newPassword.value = ''
   } catch (error) {
@@ -115,7 +115,6 @@ useSeoMeta({ title: '个人中心' })
           <span class="mb-1 block">手机号（选填）</span>
           <input v-model="phone" maxlength="11" class="w-full rounded-lg border border-app bg-app px-3 py-2 text-sm focus-visible:ring-2 ring-app">
         </label>
-        <p v-if="profileToast" class="text-sm" :style="{ color: profileToast.includes('失败') ? 'var(--color-danger)' : 'var(--color-ok)' }" role="status">{{ profileToast }}</p>
         <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium text-white" style="background: linear-gradient(120deg, var(--color-accent), var(--color-accent-2))">保存资料</button>
       </form>
     </section>
@@ -132,7 +131,6 @@ useSeoMeta({ title: '个人中心' })
           <input v-model="newPassword" type="password" required minlength="6" maxlength="32" autocomplete="new-password" class="w-full rounded-lg border border-app bg-app px-3 py-2 text-sm focus-visible:ring-2 ring-app">
         </label>
         <p v-if="passwordError" class="text-sm" style="color: var(--color-danger)" role="alert">{{ passwordError }}</p>
-        <p v-if="passwordToast" class="text-sm" style="color: var(--color-ok)" role="status">{{ passwordToast }}</p>
         <button type="submit" class="px-4 py-2 rounded-lg text-sm border border-app bg-surface hover:bg-surface-2">修改密码</button>
       </form>
     </section>

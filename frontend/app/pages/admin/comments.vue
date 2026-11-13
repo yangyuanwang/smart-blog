@@ -19,15 +19,15 @@ const { data, pending, refresh } = await useAsyncData(
 )
 interface PagePayload { list: CommentRow[], total: number }
 
-const toast = ref('')
+const toast = useToast()
 
 async function audit (id: number, next: string) {
   try {
     await api(`/admin/comments/${id}/audit`, { method: 'PUT', body: { status: next } })
-    toast.value = next === '1' ? '已通过' : '已隐藏'
+    toast.success(next === '1' ? '已通过' : '已隐藏')
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -37,10 +37,10 @@ async function remove (id: number) {
   }
   try {
     await api(`/admin/comments/${id}`, { method: 'DELETE' })
-    toast.value = '已删除'
+    toast.success('已删除')
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -62,7 +62,6 @@ useSeoMeta({ title: '评论审核' })
         <option value="1">已通过</option>
       </select>
     </div>
-    <p v-if="toast" class="mt-2 text-sm" style="color: var(--color-ok)" role="status">{{ toast }}</p>
     <p v-if="pending" class="mt-6 text-muted" role="status">加载中…</p>
     <div v-else-if="!data?.list?.length" class="mt-6 rounded-xl border border-app bg-surface px-4 py-10 text-center text-muted">
       没有评论

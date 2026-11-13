@@ -20,7 +20,7 @@ const { data, refresh } = await useAsyncData('admin-projects', () => api<Project
 
 const form = ref<Project>({ name: '', summary: '', techStack: '', repoUrl: '', demoUrl: '', featured: '0', status: '1', sort: 0, cover: '' })
 const uploading = ref(false)
-const toast = ref('')
+const toast = useToast()
 
 function edit (project: Project) {
   form.value = { ...project, featured: project.featured ?? '0', status: project.status ?? '1', sort: project.sort ?? 0 }
@@ -43,7 +43,7 @@ async function uploadCover (event: Event) {
     const result = await api<{ url: string }>('/admin/upload', { method: 'POST', body })
     form.value.cover = result.url
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   } finally {
     uploading.value = false
     input.value = ''
@@ -53,11 +53,11 @@ async function uploadCover (event: Event) {
 async function save () {
   try {
     await api('/admin/projects', { method: 'POST', body: { ...form.value } })
-    toast.value = form.value.id ? '作品已更新' : '作品已添加'
+    toast.success(form.value.id ? '作品已更新' : '作品已添加')
     reset()
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -67,10 +67,10 @@ async function remove (project: Project) {
   }
   try {
     await api(`/admin/projects/${project.id}`, { method: 'DELETE' })
-    toast.value = '作品已删除'
+    toast.success('作品已删除')
     await refresh()
   } catch (error) {
-    toast.value = (error as Error).message
+    toast.error((error as Error).message)
   }
 }
 
@@ -80,7 +80,6 @@ useSeoMeta({ title: '作品集管理' })
 <template>
   <div>
     <h1 class="font-serif text-2xl font-bold">作品集管理</h1>
-    <p v-if="toast" class="mt-2 text-sm" style="color: var(--color-ok)" role="status">{{ toast }}</p>
 
     <form class="mt-6 rounded-xl border border-app bg-surface p-4 grid gap-3" @submit.prevent="save">
       <div class="grid gap-3 sm:grid-cols-2">

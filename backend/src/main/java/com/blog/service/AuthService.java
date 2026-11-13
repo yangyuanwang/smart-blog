@@ -130,14 +130,19 @@ public class AuthService {
 
     /**
      * 注册访客账号（注册开关开启时可用），密码直接 BCrypt 存储。
+     * 邮箱验证策略：SMTP 可用且填了邮箱时必须携带验证码；SMTP 未配置时邮箱保存但标记未验证（优雅降级）。
      *
-     * @param username 用户名
-     * @param password 明文密码
-     * @param nickname 昵称（可空，默认用户名）
-     * @param email    邮箱（可空，找回密码用）
+     * @param username  用户名
+     * @param password  明文密码
+     * @param nickname  昵称（可空，默认用户名）
+     * @param email     邮箱（可空，找回密码用）
+     * @param emailCode 邮箱验证码（邮箱已填且邮件服务可用时必填）
+     * @param mail      邮件服务（SMTP 未配置时为 null）
+     * @param ip        客户端 IP（限流）
      * @return 注册并登录后的令牌结果
      */
-    public LoginResult register(String username, String password, String nickname, String email) {
+    public LoginResult register(String username, String password, String nickname, String email,
+                                String emailCode, MailService mail, String ip) {
         if (!settingService.enabled("allow_register", true)) {
             throw new BizException("当前未开放注册");
         }
@@ -152,6 +157,14 @@ public class AuthService {
         if (exists != null && exists > 0) {
             throw new BizException("用户名已存在");
         }
+        String mailBox = Texts.blank(email) ? null : Texts.cut(email, 128);
+        // 填了邮箱且邮件服务可用：必须先通过邮箱验证码确认所有权
+        if (mail != null && mail.enabled() && mailBox != null) {
+            rateLimiter.check("email-code", ip + "|" + mailBox, 5, Duration.ofMinutes(10));
+            if (!mail.verifyRegisterCode(mailBox, emailCode)) {
+                throw new BizException("邮箱验证码错误或已过期，请先获取验证码");
+            }
+        }
         User user = new User();
         user.setUsername(name);
         user.setNickname(Texts.blank(nickname) ? name : Texts.cut(nickname, 32));
@@ -159,12 +172,27 @@ public class AuthService {
         user.setRole("1");
         user.setState("1");
         user.setCreateTime(Texts.today());
-        user.setEmail(Texts.blank(email) ? null : Texts.cut(email, 128));
+        user.setEmail(mailBox);
         user.setLoginCount(0);
         userMapper.insert(user);
         JwtService.TokenPair pair = jwtService.issue(toPrincipal(user));
         user.setPassword(null);
         return new LoginResult(pair.accessToken(), pair.refreshToken(), user);
+    }
+
+    /**
+     * 发送注册邮箱验证码（SMTP 可用时）。
+     *
+     * @param email 目标邮箱
+     * @param mail  邮件服务
+     * @param ip    客户端 IP（限流）
+     */
+    public void sendRegisterEmailCode(String email, MailService mail, String ip) {
+        rateLimiter.check("email-code", ip + "|" + Texts.trim(email), 5, Duration.ofMinutes(10));
+        if (mail == null || !mail.enabled()) {
+            throw new BizException("邮件服务未配置，暂时无法发送验证码");
+        }
+        mail.sendRegisterCode(Texts.trim(email));
     }
 
     /**

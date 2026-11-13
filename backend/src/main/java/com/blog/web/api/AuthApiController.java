@@ -68,14 +68,23 @@ public class AuthApiController {
     /**
      * 注册请求体。
      *
-     * @param username 用户名
-     * @param password 密码
-     * @param nickname 昵称（可选）
-     * @param email    邮箱（可选）
+     * @param username  用户名
+     * @param password  密码
+     * @param nickname  昵称（可选）
+     * @param email     邮箱（可选；填写且邮件服务可用时需验证码）
+     * @param emailCode 邮箱验证码（与 email 配套）
      */
     public record RegisterRequest(@NotBlank @Size(min = 2, max = 32) String username,
                                   @NotBlank @Size(min = 6, max = 32) String password,
-                                  String nickname, String email) {
+                                  String nickname, String email, String emailCode) {
+    }
+
+    /**
+     * 注册邮箱验证码发送请求体。
+     *
+     * @param email 目标邮箱
+     */
+    public record EmailCodeRequest(@NotBlank @Size(max = 128) String email) {
     }
 
     /**
@@ -123,6 +132,7 @@ public class AuthApiController {
 
     /**
      * 注册并直接登录（注册开关开启时可用）。
+     * 邮箱验证策略：填写邮箱且邮件服务可用时必须携带验证码。
      *
      * @param request 注册请求
      * @param httpRequest 原始请求
@@ -132,8 +142,33 @@ public class AuthApiController {
     @PostMapping("/register")
     public Result<Map<String, Object>> register(@RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
         AuthService.LoginResult result = authService.register(request.username(), request.password(),
-                request.nickname(), request.email());
+                request.nickname(), request.email(), request.emailCode(), mailService, ip.of(httpRequest));
         return Result.ok(resultView(result.accessToken(), result.refreshToken(), result.user()));
+    }
+
+    /**
+     * 发送注册邮箱验证码（SMTP 可用时；限流防滥用）。
+     *
+     * @param request 邮箱
+     * @param httpRequest 原始请求
+     * @return 成功响应
+     */
+    @Operation(summary = "发送注册邮箱验证码")
+    @PostMapping("/email/code")
+    public Result<Void> sendEmailCode(@RequestBody EmailCodeRequest request, HttpServletRequest httpRequest) {
+        authService.sendRegisterEmailCode(request.email(), mailService, ip.of(httpRequest));
+        return Result.ok();
+    }
+
+    /**
+     * 邮件服务是否可用（前端据此决定注册页是否展示验证码输入）。
+     *
+     * @return enabled = SMTP 已配置
+     */
+    @Operation(summary = "邮件服务可用性")
+    @GetMapping("/mail-enabled")
+    public Result<Map<String, Boolean>> mailEnabled() {
+        return Result.ok(Map.of("enabled", mailService != null && mailService.enabled()));
     }
 
     /**

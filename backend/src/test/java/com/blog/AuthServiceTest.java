@@ -142,7 +142,7 @@ public class AuthServiceTest {
         AuthService switched = new AuthService(userMapper, Mockito.mock(LoginLogMapper.class),
                 new BCryptPasswordEncoder(), Mockito.mock(JwtService.class), rateLimiter, spied,
                 Mockito.mock(StringRedisTemplate.class), false);
-        assertThrows(BizException.class, () -> switched.register("newbie", "123456", "n", null));
+        assertThrows(BizException.class, () -> switched.register("newbie", "123456", "n", null, null, null, "127.0.0.1"));
         assertTrue(settings.containsKey("allow_register"));
     }
 

@@ -167,6 +167,17 @@ const paperType = computed(() => {
   }
   return 'dot-paper'
 })
+
+// 文章信息卡：正文字数（从渲染 HTML 剥离标签统计）
+const wordCount = computed(() =>
+  (bodyHtml.value || '').replace(/<[^>]+>/g, '').replace(/\s/g, '').length
+)
+
+// 侧栏日历：标记本文发布日
+const calendarMarks = computed(() => {
+  const day = article.value.createTime?.slice(0, 10)
+  return day ? { [day]: 1 } : {}
+})
 useSeoMeta({
   title: pageTitle.value,
   description: article.value.seoDesc || article.value.digest,
@@ -223,9 +234,10 @@ function fmtDate (value?: string) {
             >
             <div
               v-else
-              class="w-full h-full glow-hero bg-surface-2 grid place-items-center"
+              class="w-full h-full grid place-items-center"
+              :style="{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 22%, var(--surface)), color-mix(in srgb, var(--color-accent-2) 26%, var(--surface)))' }"
             >
-              <span class="font-serif text-6xl gradient-text select-none" aria-hidden="true">{{ article.title.slice(0, 2) }}</span>
+              <span class="font-serif text-6xl font-bold text-white/85 drop-shadow select-none" aria-hidden="true">{{ article.title.slice(0, 2) }}</span>
             </div>
           </div>
           <!-- 底部信息条：分类 + 标题 + 元数据 -->
@@ -316,9 +328,17 @@ function fmtDate (value?: string) {
         <CommentSection :aid="id" :allow-comment="!!data?.allowComment" />
       </article>
 
-      <!-- TOC 侧栏 -->
-      <aside v-if="data?.toc?.length" class="hidden lg:block lg:sticky lg:top-20 self-start" aria-label="目录">
-        <nav class="rounded-xl border border-app bg-surface p-4 max-h-[70vh] overflow-auto">
+      <!-- 右侧栏：目录 + 文章信息 + 日历（内容超出视口时内部滚动） -->
+      <aside
+        v-if="data"
+        class="hidden lg:block lg:sticky lg:top-20 self-start space-y-4 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto pr-1"
+        aria-label="文章侧栏"
+      >
+        <nav
+          v-if="data?.toc?.length"
+          class="rounded-xl border border-app bg-surface p-4"
+          aria-label="目录"
+        >
           <h2 class="font-serif font-semibold text-sm">目录</h2>
           <ul class="mt-2 space-y-1 text-sm">
             <li v-for="item in data.toc" :key="item.id" :style="{ paddingLeft: `${(item.level - 1) * 12}px` }">
@@ -330,6 +350,36 @@ function fmtDate (value?: string) {
             </li>
           </ul>
         </nav>
+
+        <!-- 文章信息卡 -->
+        <div class="rounded-xl border border-app bg-surface p-4" aria-label="文章信息">
+          <h2 class="font-serif font-semibold text-sm">文章信息</h2>
+          <dl class="mt-3 space-y-2 text-sm">
+            <div class="flex justify-between gap-2">
+              <dt class="text-muted">字数</dt>
+              <dd class="tabular-nums">{{ wordCount }}</dd>
+            </div>
+            <div class="flex justify-between gap-2">
+              <dt class="text-muted">阅读时长</dt>
+              <dd>{{ article.readingMinutes ?? 1 }} 分钟</dd>
+            </div>
+            <div class="flex justify-between gap-2">
+              <dt class="text-muted">发布于</dt>
+              <dd>{{ fmtDate(article.createTime) }}</dd>
+            </div>
+            <div class="flex justify-between gap-2">
+              <dt class="text-muted">浏览量</dt>
+              <dd class="tabular-nums">{{ views }}</dd>
+            </div>
+            <div class="flex justify-between gap-2">
+              <dt class="text-muted">点赞</dt>
+              <dd class="tabular-nums">{{ likes }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <!-- 站点日历 -->
+        <CalendarCard :marked="calendarMarks" />
       </aside>
     </div>
   </div>

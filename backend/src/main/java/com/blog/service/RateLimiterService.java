@@ -45,8 +45,23 @@ public class RateLimiterService {
         }
         if (count != null && count > limit) {
             throw new BizException(ResultCode.TOO_MANY_REQUESTS.code(),
-                    "操作太频繁，请" + window.toMinutes() + " 分钟后再试");
+                    "操作太频繁，请 " + humanize(window) + "后再试");
         }
+    }
+
+    /**
+     * 把限流窗口时长转成人话：不足一分钟显示秒，其余显示分钟。
+     *
+     * @param window 窗口时长
+     * @return 形如 "30 秒 " 或 "15 分钟 " 的提示片段
+     */
+    private String humanize(Duration window) {
+        long seconds = window.getSeconds();
+        if (seconds < 60) {
+            return seconds + " 秒 ";
+        }
+        long minutes = (seconds + 59) / 60;
+        return minutes + " 分钟 ";
     }
 
     /**

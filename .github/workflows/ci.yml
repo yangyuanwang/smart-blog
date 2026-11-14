@@ -29,8 +29,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          # 与本地一致的大版本：旧版 pnpm 读不懂 workspace 配置
-          version: 12
+          # 精确匹配本地版本：pnpm 12.19+ 对无 packages 字段的 workspace 配置报错
+          version: 12.18.0
       - uses: pnpm/action-setup@v4
         with:
           version: 9

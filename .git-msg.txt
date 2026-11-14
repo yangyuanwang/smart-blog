@@ -1,6 +1,4 @@
-fix(ci): ubuntu-22.04 for backend tests, pnpm 12 in CI, step-level secrets gate for CD
+fix(ci): pin pnpm 12.18.0 exactly
 
-- ubuntu-latest Docker 27 rejects Testcontainers 1.32 API probe (min 1.40) - pinned backend job to ubuntu-22.04
-- CI pnpm pinned to v12 matching lockfile/workspace config (pnpm 9 errored "packages field missing")
-- cd.yml deploy job had zero jobs: secrets context unavailable at job-level if; moved gate to
-  step-level check + step if
+- pnpm 12.19+ errors "packages field missing or empty" on config-only pnpm-workspace.yaml
+  under frozen-lockfile; 12.18.0 (local, verified) accepts it

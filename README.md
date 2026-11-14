@@ -1,5 +1,7 @@
 # 智序 · SMART WORKSPACE
 
+[![CI](https://github.com/yangyuanwang/smart-blog/actions/workflows/ci.yml/badge.svg)](https://github.com/yangyuanwang/smart-blog/actions/workflows/ci.yml)
+[![CD](https://github.com/yangyuanwang/smart-blog/actions/workflows/cd.yml/badge.svg)](https://github.com/yangyuanwang/smart-blog/actions/workflows/cd.yml)
 [![Java](https://img.shields.io/badge/Java-21-orange)](https://adoptium.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-green)](https://spring.io/projects/spring-boot)
 [![Nuxt](https://img.shields.io/badge/Nuxt-3-00DC82)](https://nuxt.com)

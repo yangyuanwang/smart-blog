@@ -1,0 +1,6 @@
+ci: GitHub Actions CI/CD pipelines and repo badges
+
+- ci.yml: backend mvn test (Testcontainers on GH runners) + frontend eslint/vue-tsc/build
+- cd.yml: buildx multi-image push to GHCR on main; SSH deploy step auto-activates when
+  DEPLOY_HOST/DEPLOY_USER/DEPLOY_SSH_KEY/DEPLOY_PATH secrets are configured
+- README: CI/CD badges

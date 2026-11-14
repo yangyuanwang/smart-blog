@@ -2,3 +2,5 @@ dangerouslyAllowAllBuilds: true
 onlyBuiltDependencies:
   - esbuild
   - unrs-resolver
+packages:
+  - .

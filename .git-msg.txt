@@ -1,4 +1,4 @@
-fix(ci): pin pnpm 12.18.0 exactly
+fix(ci): declare self package in pnpm-workspace.yaml
 
-- pnpm 12.19+ errors "packages field missing or empty" on config-only pnpm-workspace.yaml
-  under frozen-lockfile; 12.18.0 (local, verified) accepts it
+- linux pnpm errors "packages field missing or empty" for config-only workspace yaml under
+  frozen-lockfile; packages: [.] marks the frontend as the sole workspace package

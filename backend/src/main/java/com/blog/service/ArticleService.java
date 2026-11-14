@@ -187,8 +187,10 @@ public class ArticleService {
         article.setSeoTitle(Texts.cut(form.getSeoTitle(), 255));
         article.setSeoKeywords(Texts.cut(form.getSeoKeywords(), 255));
         article.setSeoDesc(Texts.cut(form.getSeoDesc(), 500));
-        if (!Texts.blank(logo)) {
-            article.setLogo(logo);
+        // 封面优先级：显式上传参数 > 表单自带 logo 字段（REST 表单场景）
+        String logoToApply = !Texts.blank(logo) ? logo : form.getLogo();
+        if (!Texts.blank(logoToApply)) {
+            article.setLogo(logoToApply);
         }
         if (Texts.blank(form.getDigest())) {
             article.setDigest(smartService.digest(form.getContent()));

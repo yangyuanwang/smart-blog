@@ -65,8 +65,7 @@ services:
       KNIFE4J_ENABLE: ${API_DOC_ENABLED:-false}
     volumes:
       - backend-uploads:/app/uploads
-    ports:
-      - "8080:8080"
+    # 后端不映射公网端口：外部流量统一走 frontend 的 /api 反代（8080 已让给前端入口）
     depends_on:
       mysql:
         condition: service_healthy

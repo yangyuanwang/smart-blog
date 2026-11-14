@@ -52,9 +52,18 @@ jobs:
     needs: images
     runs-on: ubuntu-latest
     steps:
+      - name: Check deploy secrets
+        id: gate
+        run: |
+          if [ -z "${{ secrets.DEPLOY_HOST }}" ]; then
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "未配置部署 Secrets，跳过 SSH 部署（镜像已保留在 GHCR）"
+          else
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Deploy over SSH
-        # Secrets 未配置时自动跳过，镜像仅保留在 GHCR
-        if: ${{ secrets.DEPLOY_HOST != '' }}
+        # step 级 if 才支持 secrets 上下文
+        if: steps.gate.outputs.deploy == 'true'
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEPLOY_HOST }}

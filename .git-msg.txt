@@ -1,6 +1,6 @@
-ci: GitHub Actions CI/CD pipelines and repo badges
+fix(ci): ubuntu-22.04 for backend tests, pnpm 12 in CI, step-level secrets gate for CD
 
-- ci.yml: backend mvn test (Testcontainers on GH runners) + frontend eslint/vue-tsc/build
-- cd.yml: buildx multi-image push to GHCR on main; SSH deploy step auto-activates when
-  DEPLOY_HOST/DEPLOY_USER/DEPLOY_SSH_KEY/DEPLOY_PATH secrets are configured
-- README: CI/CD badges
+- ubuntu-latest Docker 27 rejects Testcontainers 1.32 API probe (min 1.40) - pinned backend job to ubuntu-22.04
+- CI pnpm pinned to v12 matching lockfile/workspace config (pnpm 9 errored "packages field missing")
+- cd.yml deploy job had zero jobs: secrets context unavailable at job-level if; moved gate to
+  step-level check + step if

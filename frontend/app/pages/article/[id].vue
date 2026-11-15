@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// 文章详情：SSR 正文 + 客户端 Shiki 双主题高亮 + TOC 联动 + 阅读进度 + 点赞/浏览 + AI 摘要 + SEO
+// 文章详情：返回列表 → 头部信息（栏目/标题/摘要/作者/日期）→ 次要信息 → 封面 → 正文 → 标签/上下篇/相关 → 评论
+// 侧栏仅保留目录（吸顶、不独立内滚、过长折叠）；移动端目录收成正文前按钮
 import { codeToHtml } from 'shiki'
 
 interface TocItem { level: number, id: string, text: string }
@@ -14,6 +15,7 @@ interface ArticleItem {
   visitCount: number
   thumbsUp: number
   logo?: string
+  tagNames?: string
   seoTitle?: string
   seoKeywords?: string
   seoDesc?: string
@@ -48,9 +50,6 @@ const highlighted = ref(false)
 
 // Shiki 双主题高亮：水合后替换 pre>code，亮暗主题随 class 切换（无重渲）
 onMounted(async () => {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    // 仍执行高亮（非动效），但不阻塞
-  }
   try {
     const parser = new DOMParser()
     const doc = parser.parseFromString(`<div id="root">${data.value!.html}</div>`, 'text/html')
@@ -126,6 +125,7 @@ onBeforeUnmount(() => tocObserver?.disconnect())
 const views = ref(data.value!.views)
 const likes = ref(article.value.thumbsUp ?? 0)
 const liked = ref(false)
+const toast = useToast()
 
 onMounted(async () => {
   try {
@@ -157,16 +157,24 @@ async function like () {
 const pageTitle = computed(() => article.value.seoTitle || article.value.title)
 const origin = useRequestURL().origin
 
-// 文章信息卡：正文字数（从渲染 HTML 剥离标签统计）
-const wordCount = computed(() =>
-  (bodyHtml.value || '').replace(/<[^>]+>/g, '').replace(/\s/g, '').length
+// 封面：仅在 URL 有效且加载成功时展示
+const logoFailed = ref(false)
+const showCover = computed(() => !!article.value.logo && !logoFailed.value)
+
+// 文章标签：逗号分隔文本 → 列表
+const tagList = computed(() =>
+  (article.value.tagNames ?? '').split(/[,，]/).map(t => t.trim()).filter(Boolean)
 )
 
-// 侧栏日历：标记本文发布日
-const calendarMarks = computed(() => {
-  const day = article.value.createTime?.slice(0, 10)
-  return day ? { [day]: 1 } : {}
-})
+// 目录折叠：过长时默认收起，避免吸顶栏被撑满
+const TOC_COLLAPSE = 12
+const tocExpanded = ref(false)
+const tocItems = computed(() => data.value?.toc ?? [])
+const visibleToc = computed(() =>
+  tocExpanded.value ? tocItems.value : tocItems.value.slice(0, TOC_COLLAPSE)
+)
+const hasHiddenToc = computed(() => tocItems.value.length > TOC_COLLAPSE)
+
 useSeoMeta({
   title: pageTitle.value,
   description: article.value.seoDesc || article.value.digest,
@@ -214,46 +222,65 @@ function scrollToTop () {
       aria-hidden="true"
     />
 
-    <div class="grid gap-8 lg:grid-cols-[1fr_220px]">
+    <div class="grid gap-10 lg:grid-cols-[1fr_230px]">
       <article>
-        <!-- 封面 Hero：有封面时大图 + 渐变遮罩；无封面时渐变横幅 -->
-        <header class="relative rounded-2xl overflow-hidden border border-app">
-          <div class="h-64 sm:h-96 relative overflow-hidden">
-            <img
-              v-if="article.logo"
-              :src="article.logo"
-              :alt="`${article.title} 封面`"
-              class="w-full h-full object-cover scale-105 transition-transform duration-[1.2s] group-hover:scale-100"
-            >
-            <div
-              v-else
-              class="w-full h-full"
-              :style="{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 30%, #0b0e14), color-mix(in srgb, var(--color-accent-2) 34%, #0b0e14))' }"
-            >
-              <span class="absolute inset-0 grid place-items-center font-serif text-8xl font-bold text-white/25 select-none" aria-hidden="true">{{ article.title.slice(0, 2) }}</span>
-            </div>
-            <!-- 渐变遮罩：标题与元数据压在图上，杂志式排版 -->
-            <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/5" aria-hidden="true" />
-            <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
-              <span
-                v-if="article.categoryName"
-                class="inline-block px-2.5 py-1 rounded-md text-xs font-medium text-white bg-white/20 backdrop-blur-sm"
-              >{{ article.categoryName }}</span>
-              <h1 class="mt-3 font-serif text-3xl sm:text-5xl font-bold leading-tight text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.45)]">
-                {{ article.title }}
-              </h1>
-              <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-white/85">
-                <time>发布于 {{ fmtDate(article.createTime) }}</time>
-                <span v-if="article.readingMinutes" class="inline-flex items-center gap-1.5">
-                  <span aria-hidden="true">⏱</span>约 {{ article.readingMinutes }} 分钟
-                </span>
-                <span class="inline-flex items-center gap-1.5">
-                  <span aria-hidden="true">👁</span>{{ views }} 次浏览
-                </span>
-              </div>
-            </div>
+        <!-- 返回列表 -->
+        <NuxtLink
+          to="/articles"
+          class="inline-flex items-center gap-1.5 text-sm text-muted hover:text-main focus-visible:ring-2 ring-app rounded"
+        >
+          <span aria-hidden="true">←</span> 返回文章列表
+        </NuxtLink>
+
+        <!-- 头部信息：栏目 / 标题 / 摘要 / 作者与日期 -->
+        <header class="mt-4">
+          <span
+            v-if="article.categoryName"
+            class="inline-block px-2.5 py-1 rounded-md text-xs font-medium text-white"
+            :style="{ background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' }"
+          >{{ article.categoryName }}</span>
+          <h1 class="mt-3 font-serif text-3xl sm:text-4xl font-bold leading-tight">
+            {{ article.title }}
+          </h1>
+          <p v-if="article.digest" class="mt-3 text-sm text-muted leading-relaxed">{{ article.digest }}</p>
+          <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+            <span>{{ article.authorName || '博主' }}</span>
+            <time class="text-muted">发布于 {{ fmtDate(article.createTime) }}</time>
+          </div>
+          <!-- 次要信息 -->
+          <div class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+            <span v-if="article.readingMinutes" class="inline-flex items-center gap-1.5">
+              <span aria-hidden="true">⏱</span>约 {{ article.readingMinutes }} 分钟
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+              <span aria-hidden="true">👁</span>{{ views }} 次浏览
+            </span>
           </div>
         </header>
+
+        <!-- 封面：仅有有效封面时展示 -->
+        <figure v-if="showCover" class="mt-6 rounded-2xl overflow-hidden border border-app">
+          <img
+            :src="article.logo"
+            :alt="`${article.title} 封面`"
+            class="w-full aspect-[21/9] object-cover"
+            @error="logoFailed = true"
+          >
+        </figure>
+
+        <!-- 移动端目录：正文前的可展开按钮 -->
+        <details v-if="tocItems.length" class="mt-6 lg:hidden rounded-xl border border-app bg-surface px-4 py-3">
+          <summary class="cursor-pointer text-sm font-medium select-none focus-visible:ring-2 ring-app rounded">
+            文章目录（{{ tocItems.length }} 节）
+          </summary>
+          <nav class="mt-2" aria-label="文章目录">
+            <ul class="space-y-1 text-sm">
+              <li v-for="item in tocItems" :key="item.id" :style="{ paddingLeft: `${(item.level - 1) * 12}px` }">
+                <a :href="`#${item.id}`" class="block py-1 rounded text-muted hover:text-main focus-visible:ring-2 ring-app">{{ item.text }}</a>
+              </li>
+            </ul>
+          </nav>
+        </details>
 
         <!-- AI 摘要卡 -->
         <aside
@@ -265,8 +292,8 @@ function scrollToTop () {
           <p class="text-sm text-muted leading-relaxed">{{ article.aiSummary }}</p>
         </aside>
 
-        <!-- 正文：干净纸面 + 顶部渐变条 + 首字下沉的编辑排版 -->
-        <div class="paper paper-base mt-8 rounded-2xl border border-app px-6 py-8 sm:px-12 sm:py-10 overflow-hidden">
+        <!-- 正文：干净纸面 + 顶部渐变条 -->
+        <div class="paper paper-base mt-6 rounded-2xl border border-app px-6 py-8 sm:px-12 sm:py-10 overflow-hidden">
           <div class="paper-accent" aria-hidden="true" />
           <div
             v-if="bodyHtml.trim()"
@@ -278,6 +305,16 @@ function scrollToTop () {
           <div v-else class="py-12 text-center text-muted">
             本文暂无正文内容
           </div>
+        </div>
+
+        <!-- 文章标签 -->
+        <div v-if="tagList.length" class="mt-6 flex flex-wrap gap-2 text-sm">
+          <NuxtLink
+            v-for="tag in tagList"
+            :key="tag"
+            :to="{ path: '/articles', query: { tag } }"
+            class="px-2.5 py-1 rounded-full border border-app text-muted hover:bg-surface-2 hover:text-main focus-visible:ring-2 ring-app transition-colors"
+          ># {{ tag }}</NuxtLink>
         </div>
 
         <!-- 上一篇 / 下一篇 -->
@@ -314,20 +351,12 @@ function scrollToTop () {
         <CommentSection :aid="id" :allow-comment="!!data?.allowComment" />
       </article>
 
-      <!-- 右侧栏：目录 + 文章信息 + 日历（内容超出视口时内部滚动） -->
-      <aside
-        v-if="data"
-        class="hidden lg:block lg:sticky lg:top-20 self-start space-y-4 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto pr-1"
-        aria-label="文章侧栏"
-      >
-        <nav
-          v-if="data?.toc?.length"
-          class="rounded-xl border border-app bg-surface p-4"
-          aria-label="目录"
-        >
+      <!-- 桌面端右侧目录：吸顶、不做独立滚动区，过长时折叠 -->
+      <aside v-if="data" class="hidden lg:block lg:sticky lg:top-20 self-start" aria-label="文章目录">
+        <nav v-if="tocItems.length" class="rounded-xl border border-app bg-surface p-4" aria-label="目录">
           <h2 class="font-serif font-semibold text-sm">目录</h2>
           <ul class="mt-2 space-y-1 text-sm">
-            <li v-for="item in data.toc" :key="item.id" :style="{ paddingLeft: `${(item.level - 1) * 12}px` }">
+            <li v-for="item in visibleToc" :key="item.id" :style="{ paddingLeft: `${(item.level - 1) * 12}px` }">
               <a
                 :href="`#${item.id}`"
                 class="block py-1 rounded hover:text-main focus-visible:ring-2 ring-app"
@@ -335,37 +364,13 @@ function scrollToTop () {
               >{{ item.text }}</a>
             </li>
           </ul>
+          <button
+            v-if="hasHiddenToc"
+            type="button"
+            class="mt-2 text-xs text-muted underline hover:text-main focus-visible:ring-2 ring-app rounded"
+            @click="tocExpanded = !tocExpanded"
+          >{{ tocExpanded ? '收起目录' : `展开全部（${tocItems.length} 节）` }}</button>
         </nav>
-
-        <!-- 文章信息卡 -->
-        <div class="rounded-xl border border-app bg-surface p-4" aria-label="文章信息">
-          <h2 class="font-serif font-semibold text-sm">文章信息</h2>
-          <dl class="mt-3 space-y-2 text-sm">
-            <div class="flex justify-between gap-2">
-              <dt class="text-muted">字数</dt>
-              <dd class="tabular-nums">{{ wordCount }}</dd>
-            </div>
-            <div class="flex justify-between gap-2">
-              <dt class="text-muted">阅读时长</dt>
-              <dd>{{ article.readingMinutes ?? 1 }} 分钟</dd>
-            </div>
-            <div class="flex justify-between gap-2">
-              <dt class="text-muted">发布于</dt>
-              <dd>{{ fmtDate(article.createTime) }}</dd>
-            </div>
-            <div class="flex justify-between gap-2">
-              <dt class="text-muted">浏览量</dt>
-              <dd class="tabular-nums">{{ views }}</dd>
-            </div>
-            <div class="flex justify-between gap-2">
-              <dt class="text-muted">点赞</dt>
-              <dd class="tabular-nums">{{ likes }}</dd>
-            </div>
-          </dl>
-        </div>
-
-        <!-- 站点日历 -->
-        <CalendarCard :marked="calendarMarks" />
       </aside>
     </div>
 

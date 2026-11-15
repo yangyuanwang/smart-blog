@@ -137,6 +137,10 @@ const siteName = computed(() => '智序 SMART WORKSPACE')
         <p class="flex items-center gap-3">
           <a href="/rss.xml" class="hover:text-main focus-visible:ring-2 ring-app rounded">RSS</a>
           <span aria-hidden="true">·</span>
+          <NuxtLink to="/links" class="hover:text-main focus-visible:ring-2 ring-app rounded">友链</NuxtLink>
+          <span aria-hidden="true">·</span>
+          <NuxtLink to="/about" class="hover:text-main focus-visible:ring-2 ring-app rounded">关于</NuxtLink>
+          <span aria-hidden="true">·</span>
           <span>Nuxt 3 × Spring Boot 3</span>
         </p>
       </div>

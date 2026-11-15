@@ -29,9 +29,11 @@ import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class ContentService {
@@ -510,10 +512,22 @@ public class ContentService {
     }
 
     public List<Notice> topNotices(int limit) {
-        return noticeMapper.selectList(new QueryWrapper<Notice>()
+        // 按 title+content 去重：同一内容只返回一次，避免首页公告重复渲染
+        List<Notice> all = noticeMapper.selectList(new QueryWrapper<Notice>()
                 .orderByDesc("is_top")
-                .orderByDesc("id")
-                .last("limit " + limit));
+                .orderByDesc("id"));
+        List<Notice> result = new ArrayList<Notice>();
+        Set<String> seen = new HashSet<String>();
+        for (Notice notice : all) {
+            if (!seen.add(notice.getTitle() + "|" + notice.getContent())) {
+                continue;
+            }
+            result.add(notice);
+            if (result.size() >= limit) {
+                break;
+            }
+        }
+        return result;
     }
 
     public void saveNotice(Notice notice) {

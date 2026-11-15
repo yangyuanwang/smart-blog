@@ -73,12 +73,15 @@ public class PublicApiController {
     @GetMapping("/api/v1/home")
     public Result<Map<String, Object>> home() {
         Map<String, Object> data = new HashMap<String, Object>();
-        data.put("latest", articleService.latest(4));
+        // 7 篇：1 篇精选大卡 + 至多 6 篇最近文章
+        List<Article> latestList = articleService.latest(7);
+        latestList.forEach(article -> article.setContent(null));
+        data.put("latest", latestList);
         data.put("featuredProjects", featuredProjects());
         data.put("notices", contentService.topNotices(3));
         data.put("diaries", contentService.recentDiaries(3));
         data.put("site", publicSite());
-        // 首页 Hero 的实时统计（文章数 / 已发布 / 总访问 / 标签数）
+        // 低调信息用统计（文章数），不作为首屏主视觉
         Map<String, Object> stats = new HashMap<String, Object>();
         stats.put("articles", articleService.publicCount());
         stats.put("visits", articleService.visits());

@@ -1,4 +1,0 @@
-fix(ci): declare self package in pnpm-workspace.yaml
-
-- linux pnpm errors "packages field missing or empty" for config-only workspace yaml under
-  frozen-lockfile; packages: [.] marks the frontend as the sole workspace package

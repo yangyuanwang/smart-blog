@@ -42,10 +42,10 @@ export function clearTokens () {
   }
 }
 
-/** 401 刷新只尝试一次，避免无限循环 */
+/** 401 刷新只尝试一次，避免无限循环；后台路由守卫复用（composable 目录导出即可自动导入） */
 let refreshing: Promise<boolean> | null = null
 
-async function tryRefresh (): Promise<boolean> {
+export async function tryRefresh (): Promise<boolean> {
   const { refresh } = readTokens()
   if (!refresh) {
     return false

@@ -38,8 +38,6 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: 'zh-CN' },
-      titleTemplate: (title: string | undefined) =>
-        title ? `${title} · 智序` : '智序 SMART WORKSPACE',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },

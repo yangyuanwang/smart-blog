@@ -95,9 +95,9 @@ async function removeTag (tag: Tag) {
 useSeoMeta({ title: '栏目与标签' })
 
 // 按栏目分组标签：归属关系一目了然；无栏目（cid 为空）的归入「未分组」
-const groupedTags = computed(() => {
+const groupedTags = computed<{ cid: number | null, name: string, tags: Tag[] }[]>(() => {
   const list = tags.value ?? []
-  const groups = (categories.value ?? []).map(category => ({
+  const groups: { cid: number | null, name: string, tags: Tag[] }[] = (categories.value ?? []).map(category => ({
     cid: category.cid,
     name: category.cname,
     tags: list.filter(tag => tag.cid === category.cid)

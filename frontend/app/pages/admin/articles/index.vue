@@ -185,7 +185,7 @@ useSeoMeta({ title: '文章管理' })
     <nav v-if="totalPages > 1" class="mt-4 flex items-center justify-center gap-2" aria-label="分页">
       <button type="button" class="px-3 py-1.5 rounded-lg border border-app bg-surface text-sm disabled:opacity-40" :disabled="page <= 1" @click="navigateTo({ path: '/admin/articles', query: { ...(page > 2 ? { page: String(page - 1) } : {}) } })">上一页</button>
       <span class="text-sm text-muted px-2">{{ page }} / {{ totalPages }}</span>
-      <button type="button" class="px-3 py-1.5 rounded-lg border border-app bg-surface text-sm disabled:opacity-40" :disabled="page >= totalPages" @click="navigateTo({ path: '/admin/articles', query: { page: String(page + 1), ...(title.value ? { title: title.value } : {}) } })">下一页</button>
+      <button type="button" class="px-3 py-1.5 rounded-lg border border-app bg-surface text-sm disabled:opacity-40" :disabled="page >= totalPages" @click="navigateTo({ path: '/admin/articles', query: { page: String(page + 1), ...(title ? { title } : {}) } })">下一页</button>
     </nav>
   </div>
 </template>

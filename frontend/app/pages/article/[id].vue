@@ -78,7 +78,7 @@ onMounted(async () => {
   }
 })
 
-// 阅读进度条 + 浮动工具条显隐
+// 阅读进度条 + 浮动工具条显隐（仅正文区域内浮动；滚出正文/进入评论区自动淡出）
 const progress = ref(0)
 const dockVisible = ref(false)
 function onScroll () {
@@ -90,7 +90,8 @@ function onScroll () {
   const total = el.offsetHeight
   const current = window.scrollY - start
   progress.value = Math.min(100, Math.max(0, (current / Math.max(total, 1)) * 100))
-  dockVisible.value = window.scrollY > 420
+  // 正文范围内显示；进入相关推荐/评论区后隐藏，避免悬浮遮挡
+  dockVisible.value = window.scrollY > 420 && window.scrollY < el.offsetTop + el.offsetHeight + 120
 }
 onMounted(() => {
   window.addEventListener('scroll', onScroll, { passive: true })
@@ -137,6 +138,16 @@ onMounted(async () => {
     // 浏览上报失败不影响阅读
   }
 })
+
+// 复制文章链接（读完互动条）
+async function copyLink () {
+  try {
+    await navigator.clipboard.writeText(useRequestURL().origin + route.fullPath)
+    toast.success('文章链接已复制')
+  } catch {
+    toast.error('复制失败，请手动复制地址栏链接')
+  }
+}
 
 async function like () {
   try {
@@ -315,6 +326,37 @@ function scrollToTop () {
             :to="{ path: '/articles', query: { tag } }"
             class="px-2.5 py-1 rounded-full border border-app text-muted hover:bg-surface-2 hover:text-main focus-visible:ring-2 ring-app transition-colors"
           ># {{ tag }}</NuxtLink>
+        </div>
+
+        <!-- 读完互动条：点赞 / 复制链接，紧跟正文结尾 -->
+        <div class="mt-8 rounded-xl border border-app bg-surface px-6 py-5 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p class="font-serif font-semibold">读完这篇了？</p>
+            <p class="text-xs text-muted mt-1">点个赞让作者知道，或把文章分享给朋友</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border transition-all focus-visible:ring-2 ring-app"
+              :class="liked ? 'text-white border-transparent' : 'border-app bg-surface hover:bg-surface-2'"
+              :style="liked ? { background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' } : {}"
+              :aria-pressed="liked"
+              :aria-label="liked ? '取消点赞' : '点赞这篇文章'"
+              @click="like"
+            >
+              <span aria-hidden="true">{{ liked ? '💗' : '🤍' }}</span>
+              <span class="tabular-nums">{{ likes }}</span>
+            </button>
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border border-app bg-surface hover:bg-surface-2 focus-visible:ring-2 ring-app transition-colors"
+              aria-label="复制文章链接"
+              @click="copyLink"
+            >
+              <span aria-hidden="true">🔗</span>
+              <span>复制链接</span>
+            </button>
+          </div>
         </div>
 
         <!-- 上一篇 / 下一篇 -->

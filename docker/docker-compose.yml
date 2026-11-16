@@ -61,6 +61,8 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       BLOG_UPLOAD_DIR: /app/uploads
       API_DOC_ENABLED: ${API_DOC_ENABLED:-false}
+      # CORS 白名单：生产环境 = 公网访问地址（备案后追加域名）
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://1.15.234.108:8080,http://localhost:3000,http://127.0.0.1:3000}
       # Knife4j 自动配置必须与 springdoc 同步开关，否则 API 文档关闭时启动失败
       KNIFE4J_ENABLE: ${API_DOC_ENABLED:-false}
     volumes:

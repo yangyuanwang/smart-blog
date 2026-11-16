@@ -34,13 +34,19 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
 
+    /** CORS 白名单来源（逗号分隔，环境变量 CORS_ORIGINS 注入） */
+    private final String corsOrigins;
+
     /**
      * 构造安全配置。
      *
      * @param jwtAuthFilter JWT 过滤器
+     * @param corsOrigins   允许的跨域来源列表（逗号分隔）
      */
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter,
+                          @Value("${blog.security.cors-origins}") String corsOrigins) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.corsOrigins = corsOrigins;
     }
 
     /**
@@ -100,7 +106,12 @@ public class SecurityConfig {
      */
     private CorsConfigurationSource corsSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000", "http://127.0.0.1:3000"));
+        // 白名单来自配置：本地开发默认 localhost:3000，生产由 CORS_ORIGINS 注入真实来源
+        List<String> origins = java.util.Arrays.stream(corsOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList();
+        config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setMaxAge(3600L);

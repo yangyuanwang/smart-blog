@@ -78,6 +78,8 @@ blog:
     # 反向代理可信来源：仅当请求来自这里的 IP 时才信任 X-Forwarded-For
     trusted-proxies: ${TRUSTED_PROXIES:127.0.0.1,0:0:0:0:0:0:0:1}
     captcha-enabled: ${CAPTCHA_ENABLED:false}
+    # CORS 白名单：逗号分隔；生产环境用 CORS_ORIGINS 注入真实来源（含域名后追加域名地址）
+    cors-origins: ${CORS_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
 
 logging:
   level:

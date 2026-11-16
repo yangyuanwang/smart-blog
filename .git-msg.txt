@@ -1,0 +1,7 @@
+fix(frontend): sessionId fallback for non-secure HTTP + Chinese-normalized API error toasts
+
+- crypto.randomUUID only exists in secure contexts (HTTPS/localhost); HTTP production
+  threw 'crypto.randomUUID is not a function' on every like/view - now falls back to a
+  timestamp+random composite id
+- api() error normalization: backend Result bodies surface their Chinese messages,
+  network/gateway errors map to friendly Chinese toasts instead of raw English fetch errors

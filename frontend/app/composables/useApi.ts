@@ -9,7 +9,10 @@ export function getSessionId (): string {
   if (import.meta.client) {
     let sid = localStorage.getItem('blog:sessionId')
     if (!sid) {
-      sid = crypto.randomUUID()
+      // crypto.randomUUID 仅在 HTTPS/localhost 安全上下文存在；HTTP 环境用随机串兜底
+      sid = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}-${Math.random().toString(36).slice(2, 10)}`
       localStorage.setItem('blog:sessionId', sid)
     }
     return sid
@@ -94,13 +97,47 @@ export async function api<T> (path: string, options: Record<string, unknown> = {
     }
     return res.data
   } catch (error) {
-    const status = (error as { statusCode?: number }).statusCode ?? 0
-    const code = (error as ApiError).code ?? 0
-    if (status === 401 || code === 1002) {
+    const fetchErr = error as {
+      statusCode?: number, status?: number,
+      data?: { code?: number, message?: string },
+      message?: string
+    }
+    const status = fetchErr.statusCode ?? fetchErr.status ?? 0
+    const bodyCode = fetchErr.data?.code ?? 0
+    const bodyMessage = fetchErr.data?.message
+
+    // 401：尝试刷新令牌后重放一次
+    if (status === 401 || bodyCode === 1002) {
       if (await tryRefresh()) {
         return api<T>(path, options)
       }
     }
-    throw error
+
+    // 后端返回了 Result 错误体：直接透出中文业务提示
+    if (bodyMessage) {
+      const apiErr = new Error(bodyMessage) as ApiError
+      apiErr.code = bodyCode ?? (status >= 500 ? 5000 : 1000)
+      throw apiErr
+    }
+
+    // 网络层 / 网关层错误：统一中文提示，避免英文原始报错直达用户
+    const friendly: Record<number, string> = {
+      403: '没有权限执行此操作',
+      404: '请求的内容不存在',
+      429: '操作太频繁，请稍后再试'
+    }
+    const fallback = status === 0
+      ? '网络异常，请检查网络后重试'
+      : status >= 500
+        ? '服务器开小差了，请稍后再试'
+        : friendly[status] ?? '请求失败，请稍后再试'
+    const apiErr = new Error(fallback) as ApiError
+    apiErr.code = status === 401 ? 1002 : status >= 500 ? 5000 : 1000
+    if (status === 401) {
+      if (await tryRefresh()) {
+        return api<T>(path, options)
+      }
+    }
+    throw apiErr
   }
 }

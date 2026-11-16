@@ -318,26 +318,20 @@ function scrollToTop () {
           </div>
         </div>
 
-        <!-- 文章标签 -->
-        <div v-if="tagList.length" class="mt-6 flex flex-wrap gap-2 text-sm">
-          <NuxtLink
-            v-for="tag in tagList"
-            :key="tag"
-            :to="{ path: '/articles', query: { tag } }"
-            class="px-2.5 py-1 rounded-full border border-app text-muted hover:bg-surface-2 hover:text-main focus-visible:ring-2 ring-app transition-colors"
-          ># {{ tag }}</NuxtLink>
-        </div>
-
-        <!-- 读完互动条：点赞 / 复制链接，紧跟正文结尾 -->
-        <div class="mt-8 rounded-xl border border-app bg-surface px-6 py-5 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p class="font-serif font-semibold">读完这篇了？</p>
-            <p class="text-xs text-muted mt-1">点个赞让作者知道，或把文章分享给朋友</p>
+        <!-- 标签 + 读完互动：一行内联，不设盒子，与正文自然衔接 -->
+        <div class="mt-8 flex flex-wrap items-center gap-y-3">
+          <div v-if="tagList.length" class="flex flex-wrap gap-2 text-sm">
+            <NuxtLink
+              v-for="tag in tagList"
+              :key="tag"
+              :to="{ path: '/articles', query: { tag } }"
+              class="px-2.5 py-1 rounded-full border border-app text-muted hover:bg-surface-2 hover:text-main focus-visible:ring-2 ring-app transition-colors"
+            ># {{ tag }}</NuxtLink>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 ml-auto">
             <button
               type="button"
-              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border transition-all focus-visible:ring-2 ring-app"
+              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border transition-all focus-visible:ring-2 ring-app"
               :class="liked ? 'text-white border-transparent' : 'border-app bg-surface hover:bg-surface-2'"
               :style="liked ? { background: 'linear-gradient(120deg, var(--color-accent), var(--color-accent-2))' } : {}"
               :aria-pressed="liked"
@@ -349,39 +343,41 @@ function scrollToTop () {
             </button>
             <button
               type="button"
-              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border border-app bg-surface hover:bg-surface-2 focus-visible:ring-2 ring-app transition-colors"
+              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm border border-app bg-surface hover:bg-surface-2 focus-visible:ring-2 ring-app transition-colors"
               aria-label="复制文章链接"
               @click="copyLink"
             >
               <span aria-hidden="true">🔗</span>
-              <span>复制链接</span>
             </button>
           </div>
         </div>
 
-        <!-- 上一篇 / 下一篇 -->
-        <nav class="mt-10 grid gap-3 sm:grid-cols-2" aria-label="上下篇">
+        <!-- 上一篇 / 下一篇：简洁链接行，不做卡片 -->
+        <nav class="mt-10 pt-6 border-t border-app grid gap-3 sm:grid-cols-2" aria-label="上下篇">
           <NuxtLink
             v-if="data?.prev"
             :to="`/article/${data.prev.aid}`"
-            class="rounded-xl border border-app bg-surface p-4 hover:bg-surface-2 focus-visible:ring-2 ring-app transition-colors"
+            class="text-sm group focus-visible:ring-2 ring-app rounded"
           >
             <p class="text-xs text-muted">← 上一篇</p>
-            <p class="mt-1 text-sm font-medium line-clamp-1">{{ data.prev.title }}</p>
+            <p class="mt-1 font-medium line-clamp-1 group-hover:text-main transition-colors">{{ data.prev.title }}</p>
           </NuxtLink>
           <span v-else />
           <NuxtLink
             v-if="data?.next"
             :to="`/article/${data.next.aid}`"
-            class="rounded-xl border border-app bg-surface p-4 hover:bg-surface-2 focus-visible:ring-2 ring-app transition-colors sm:text-right"
+            class="text-sm group focus-visible:ring-2 ring-app rounded sm:text-right"
           >
             <p class="text-xs text-muted">下一篇 →</p>
-            <p class="mt-1 text-sm font-medium line-clamp-1">{{ data.next.title }}</p>
+            <p class="mt-1 font-medium line-clamp-1 group-hover:text-main transition-colors">{{ data.next.title }}</p>
           </NuxtLink>
         </nav>
 
-        <!-- 相关推荐 -->
-        <section v-if="data?.related?.length" class="mt-10" aria-labelledby="related-heading">
+        <!-- 评论区：紧贴正文，与文章连续 -->
+        <CommentSection :aid="id" :allow-comment="!!data?.allowComment" />
+
+        <!-- 相关推荐：页面末尾，评论之后 -->
+        <section v-if="data?.related?.length" class="mt-14 pt-10 border-t border-app" aria-labelledby="related-heading">
           <h2 id="related-heading" class="font-serif text-xl font-bold">相关推荐</h2>
           <ul class="mt-4 grid gap-4 sm:grid-cols-2">
             <li v-for="item in data.related" :key="item.aid">
@@ -389,8 +385,6 @@ function scrollToTop () {
             </li>
           </ul>
         </section>
-
-        <CommentSection :aid="id" :allow-comment="!!data?.allowComment" />
       </article>
 
       <!-- 桌面端右侧目录：吸顶、不做独立滚动区，过长时折叠 -->
